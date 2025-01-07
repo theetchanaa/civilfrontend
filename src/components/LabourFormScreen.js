@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { TextInput, View, Button, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { TextInput, View, Button, StyleSheet } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 const LabourFormPage = () => {
@@ -8,35 +8,86 @@ const LabourFormPage = () => {
   const [labourId, setLabourId] = useState('');
   const [industryType, setIndustryType] = useState('');
   const [newIndustryType, setNewIndustryType] = useState('');
+  const [industryOptions, setIndustryOptions] = useState([]);
+  const [filteredIndustryOptions, setFilteredIndustryOptions] = useState([]);
+  const [openIndustry, setOpenIndustry] = useState(false); 
 
-  const [industryOptions, setIndustryOptions] = useState([
-    'Mason', 'Shuttering', 'Carpenter', 'Painter', 'Tiles Work', 'Electrician', 'Plumber', 'RR Mason',
-  ]);
+  useEffect(() => {
+    const fetchIndustryOptions = async () => {
+      try {
+        const response = await fetch('http://192.168.151.233:5000/labour'); 
+        const data = await response.json();
+        console.log(data)
+        setIndustryOptions(data.labour); 
+        setFilteredIndustryOptions(data.labour); 
+      } catch (error) {
+        console.error('Error fetching industry types:', error);
+      }
+    };
 
-  const [filteredIndustryOptions, setFilteredIndustryOptions] = useState(industryOptions); // for filtering the options
-  const [openIndustry, setOpenIndustry] = useState(false); // For dropdown visibility
+    fetchIndustryOptions();
+  }, []);
 
-  // Handle adding new industry type
-  const handleAddType = () => {
-    if (newIndustryType.trim() !== '' && !industryOptions.includes(newIndustryType)) {
-      setIndustryOptions([...industryOptions, newIndustryType]);
-      setFilteredIndustryOptions([...industryOptions, newIndustryType]); // Update filtered options too
-      setNewIndustryType('');
+
+
+  const handleSearchTextChange = (text) => {
+    const filtered = industryOptions.filter(
+      (option) =>
+        option && 
+        option.toLowerCase().startsWith(text.toLowerCase())
+    );
+    setFilteredIndustryOptions(filtered);
+  };
+
+  const handleSubmit = async () => {
+    const formData = {
+      name,
+      id :phone,
+      type: industryType || newIndustryType, 
+    };
+  
+    try {
+      if (newIndustryType && !industryType) {
+        const labourResponse = await fetch('http://192.168.151.233:5000/add-labour', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ labour: newIndustryType }),
+        });
+  
+        const labourData = await labourResponse.json();
+  
+        if (!labourData.success) {
+          alert('Error adding new labour type: ' + labourData.message);
+          return; 
+        }
+  
+        alert('New labour type added successfully!');
+      }
+  
+      const response = await fetch('http://192.168.151.233:5000/add-category', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        alert('Form Submitted Successfully!');
+      } else {
+        alert('Error: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('There was an error submitting the form.');
     }
   };
-
-  // Filter options based on the text typed
-  const handleSearchTextChange = (text) => {
-    const filtered = industryOptions.filter(option =>
-      option.toLowerCase().startsWith(text.toLowerCase())
-    );
-    setFilteredIndustryOptions(filtered); // Update the filtered options
-  };
-
-  // Handle form submission
-  const handleSubmit = () => {
-    console.log('Form Submitted', { name, phone, labourId, industryType });
-  };
+  
+  
 
   return (
     <View style={styles.container}>
@@ -55,25 +106,22 @@ const LabourFormPage = () => {
         keyboardType="phone-pad"
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Labour ID"
-        value={labourId}
-        onChangeText={setLabourId}
-      />
-
-      {/* Searchable Industry Dropdown */}
       <DropDownPicker
         open={openIndustry}
         value={industryType}
-        items={filteredIndustryOptions.map(option => ({ label: option, value: option }))}
+        items={[
+          { label: "None", value: null },
+          ...filteredIndustryOptions
+            ?.filter((option) => option) 
+            .map((option, index) => ({ label: option, value: option, key: index })), 
+        ]}
         setOpen={setOpenIndustry}
         setValue={setIndustryType}
         placeholder="Select Industry Type"
         searchable={true}
         searchPlaceholder="Search industry..."
         style={styles.dropdown}
-        onChangeSearchText={handleSearchTextChange} // Filter dropdown items as user types
+        onChangeSearchText={handleSearchTextChange}
       />
 
       <TextInput
@@ -81,11 +129,9 @@ const LabourFormPage = () => {
         placeholder="Add a new industry type"
         value={newIndustryType}
         onChangeText={setNewIndustryType}
+        editable={!industryType} 
       />
 
-      <View style={styles.addButtonContainer}>
-        <Button title="Add Type" onPress={handleAddType} />
-      </View>
 
       <View style={styles.submitButtonContainer}>
         <Button title="Submit" onPress={handleSubmit} />
@@ -115,10 +161,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   addButtonContainer: {
-    marginBottom: 30, // Adjusts the position of the "Add Type" button
+    marginBottom: 30, 
   },
   submitButtonContainer: {
-    marginBottom: 50, // Ensures the submit button is not hidden
+    marginBottom: 50, 
   },
 });
 
