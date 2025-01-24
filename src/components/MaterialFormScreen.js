@@ -1,135 +1,194 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker'; // Importing DropDownPicker
+import React, { useState, useEffect } from 'react';
+import {
+  TextInput,
+  View,
+  Button,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 
-const MaterialFormScreen = ({ navigation }) => {
-  const [companyId, setCompanyId] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+const MaterialFormScreen = () => {
   const [name, setName] = useState('');
-  const [materialType, setMaterialType] = useState('');
-  const [newType, setNewType] = useState('');
-  
-  const [materialOptions, setMaterialOptions] = useState([
-    'Cement', 'Bricks', 'M Sand', 'Metal', 'Steel', 
-    'Shuttering Materials', 'Wood', 'Hardwares',
-    'Paint Shop', 'Tiles', 'Tiles Paste', 'Electrical Materials',
-    'Plumbing Materials', 'Soling', 'RR Stones'
-  ]);
+  const [phone, setPhone] = useState('');
+  const [industryType, setIndustryType] = useState('');
+  const [newIndustryType, setNewIndustryType] = useState('');
+  const [industryOptions, setIndustryOptions] = useState([]);
+  const [filteredIndustryOptions, setFilteredIndustryOptions] = useState([]);
+  const [openIndustry, setOpenIndustry] = useState(false);
 
-  const [filteredMaterialOptions, setFilteredMaterialOptions] = useState(materialOptions); // for filtering the options
-  const [openMaterial, setOpenMaterial] = useState(false); // For dropdown visibility
+  useEffect(() => {
+    const fetchIndustryOptions = async () => {
+      try {
+        const response = await fetch('http://192.168.145.98:5000/material');
+        const data = await response.json();
+        console.log(data);
+        setIndustryOptions(data.material);
+        setFilteredIndustryOptions(data.material);
+      } catch (error) {
+        console.error('Error fetching material types:', error);
+      }
+    };
 
-  const handleAddNewType = () => {
-    if (newType.trim() && !materialOptions.includes(newType.trim())) {
-      setMaterialOptions([...materialOptions, newType.trim()]);
-      setNewType('');
+    fetchIndustryOptions();
+  }, []);
+
+  const handleSearchTextChange = (text) => {
+    const filtered = industryOptions.filter(
+      (option) =>
+        option &&
+        option.toLowerCase().startsWith(text.toLowerCase())
+    );
+    setFilteredIndustryOptions(filtered);
+  };
+
+  const handleSubmit = async () => {
+    const formData = {
+      name,
+      id: phone,
+      type: industryType || newIndustryType,
+    };
+
+    try {
+      if (newIndustryType && !industryType) {
+        const labourResponse = await fetch('http://192.168.145.98:5000/add-material', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ material: newIndustryType }),
+        });
+
+        const materialData = await materialResponse.json();
+
+        if (materialData.error) {
+          alert(`Error: ${materialData.error}`);
+          return;
+        }
+
+        if (materialData.success) {
+          alert('Success: New material type added successfully!');
+        }
+      }
+
+      const response = await fetch('http://192.168.145.98:5000/add-category', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert(`Error: ${data.error}`);
+      } else if (data.success) {
+        alert('Success: Form submitted successfully!');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('There was an error submitting the form.');
     }
   };
 
-  const handleSearchTextChange = (text) => {
-    const filtered = materialOptions.filter(option =>
-      option.toLowerCase().startsWith(text.toLowerCase())
-    );
-    setFilteredMaterialOptions(filtered); // Update the filtered options
-  };
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Material Form</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : null}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContainer}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
+        >
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Name"
+            value={name}
+            onChangeText={setName}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Company ID"
-        value={companyId}
-        onChangeText={setCompanyId}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Name"
-        value={name}
-        onChangeText={setName}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+          />
 
-      <Text style={styles.label}>Choose Material Type:</Text>
-      <View style={styles.dropdownContainer}>
-        <DropDownPicker
-          open={openMaterial}
-          value={materialType}
-          items={filteredMaterialOptions.map(option => ({ label: option, value: option }))}
-          setOpen={setOpenMaterial}
-          setValue={setMaterialType}
-          placeholder="Select Material Type"
-          searchable={true}
-          searchPlaceholder="Search material..."
-          style={styles.dropdown}
-          onChangeSearchText={handleSearchTextChange} // Filters based on typed text
-        />
-      </View>
+          <DropDownPicker
+            open={openIndustry}
+            value={industryType}
+            items={[
+              { label: "None", value: null },
+              ...filteredIndustryOptions
+                ?.filter((option) => option)
+                .map((option, index) => ({
+                  label: option,
+                  value: option,
+                  key: index,
+                })),
+            ]}
+            setOpen={setOpenIndustry}
+            setValue={setIndustryType}
+            placeholder="Select Material Type"
+            searchable={true}
+            searchPlaceholder="Search material..."
+            style={styles.dropdown}
+            onChangeSearchText={handleSearchTextChange}
+            listMode="SCROLLVIEW" 
+            zIndex={1000} 
+            zIndexInverse={1000} 
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Add New Material Type"
-        value={newType}
-        onChangeText={setNewType}
-      />
-      <TouchableOpacity onPress={handleAddNewType} style={styles.addButton}>
-        <Text style={styles.addButtonText}>Add New Type</Text>
-      </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Add a new material type"
+            value={newIndustryType}
+            onChangeText={setNewIndustryType}
+            editable={!industryType}
+          />
 
-      <Button title="Submit" onPress={() => console.log('Material Form Submitted')} />
-    </View>
+          <View style={styles.submitButtonContainer}>
+            <Button title="Submit" onPress={handleSubmit} />
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f8f9fa',
   },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  scrollViewContainer: {
+    padding: 20,
+    paddingBottom: 50,
   },
   input: {
-    height: 40,
+    height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 8,
+    marginBottom: 15,
+    paddingLeft: 10,
     borderRadius: 5,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  dropdownContainer: {
-    marginBottom: 10,
   },
   dropdown: {
-    height: 40,
-    borderWidth: 1,
+    height: 50,
+    marginBottom: 15,
     borderColor: '#ccc',
+    borderWidth: 1,
     borderRadius: 5,
   },
-  addButton: {
-    backgroundColor: '#007bff',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  submitButtonContainer: {
+    marginBottom: 50,
   },
 });
 
