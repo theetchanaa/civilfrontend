@@ -1,103 +1,158 @@
-import React, { useState } from 'react';
-import { TextInput, View, Button, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { TextInput, View, Button, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 const MachineryFormScreen = () => {
-  const [companyId, setCompanyId] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [name, setName] = useState('');
-  const [machineryType, setMachineryType] = useState('');
-  const [newType, setNewType] = useState('');
+  const [phone, setPhone] = useState('');
+  const [industryType, setIndustryType] = useState('');
+  const [newIndustryType, setNewIndustryType] = useState('');
+  const [industryOptions, setIndustryOptions] = useState([]);
+  const [filteredIndustryOptions, setFilteredIndustryOptions] = useState([]);
+  const [openIndustry, setOpenIndustry] = useState(false);
 
-  const [machineryOptions, setMachineryOptions] = useState([
-    'Excavators', 'Loaders', 'Cranes', 'Bulldozers', 'Forklifts', 'Compactors', 'Generators', 'Concrete Mixers',
-  ]);
+  useEffect(() => {
+    const fetchIndustryOptions = async () => {
+      try {
+        const response = await fetch('http://10.1.224.44:5000/machinery');
+        const data = await response.json();
+        setIndustryOptions(data.machinery);
+        setFilteredIndustryOptions(data.machinery);
+      } catch (error) {
+        console.error('Error fetching machinery types:', error);
+      }
+    };
+    fetchIndustryOptions();
+  }, []);
 
-  const [filteredMachineryOptions, setFilteredMachineryOptions] = useState(machineryOptions);
-  const [openMachinery, setOpenMachinery] = useState(false);
+  const handleSearchTextChange = (text) => {
+    const filtered = industryOptions.filter(
+      (option) =>
+        option && option.toLowerCase().startsWith(text.toLowerCase())
+    );
+    setFilteredIndustryOptions(filtered);
+  };
 
-  // Handle adding a new machinery type
-  const handleAddType = () => {
-    if (newType.trim() !== '' && !machineryOptions.includes(newType)) {
-      setMachineryOptions([...machineryOptions, newType]);
-      setFilteredMachineryOptions([...machineryOptions, newType]);
-      setNewType('');
+  const handleSubmit = async () => {
+    const formData = {
+      name,
+      id: phone,
+      type: industryType || newIndustryType,
+    };
+
+    try {
+      if (newIndustryType && !industryType) {
+        const machineryResponse = await fetch('http://10.1.224.44:5000/add-machinery', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ machinery: newIndustryType }),
+        });
+
+        const machineryData = await machineryResponse.json();
+        if (machineryData.error) {
+          alert(`Error : ${machineryData.message}`);
+          return;
+        }
+        alert('Success: New machinery type added successfully!');
+      }
+
+      const response = await fetch('http://10.1.224.44:5000/add-category', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        alert(`Error: ${data.error}`);
+      } else if (data.success) {
+        alert('Success: Form submitted successfully!');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('There was an error submitting the form.');
     }
   };
 
-  // Filter options based on the text typed
-  const handleSearchTextChange = (text) => {
-    const filtered = machineryOptions.filter(option =>
-      option.toLowerCase().startsWith(text.toLowerCase())
-    );
-    setFilteredMachineryOptions(filtered);
-  };
-
-  // Handle form submission
-  const handleSubmit = () => {
-    console.log('Form Submitted', { companyId, phoneNumber, name, machineryType });
-  };
-
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Company ID"
-        value={companyId}
-        onChangeText={setCompanyId}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        keyboardType="phone-pad"
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Name"
-        value={name}
-        onChangeText={setName}
-      />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : null}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContainer}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
+        >
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Name"
+            value={name}
+            onChangeText={setName}
+          />
 
-      {/* Searchable Machinery Dropdown */}
-      <DropDownPicker
-        open={openMachinery}
-        value={machineryType}
-        items={filteredMachineryOptions.map(option => ({ label: option, value: option }))}
-        setOpen={setOpenMachinery}
-        setValue={setMachineryType}
-        placeholder="Select Machinery Type"
-        searchable={true}
-        searchPlaceholder="Search machinery..."
-        style={styles.dropdown}
-        onChangeSearchText={handleSearchTextChange}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Add a new machinery type"
-        value={newType}
-        onChangeText={setNewType}
-      />
-      
-      <View style={styles.addButtonContainer}>
-        <Button title="Add Type" onPress={handleAddType} />
-      </View>
+          <DropDownPicker
+            open={openIndustry}
+            value={industryType}
+            items={[
+              { label: "None", value: null },
+              ...filteredIndustryOptions
+                ?.filter((option) => option)
+                .map((option, index) => ({
+                  label: option,
+                  value: option,
+                  key: index,
+                })),
+            ]}
+            setOpen={setOpenIndustry}
+            setValue={setIndustryType}
+            placeholder="Select machinery Type"
+            searchable={true}
+            searchPlaceholder="Search machinery..."
+            style={styles.dropdown}
+            onChangeSearchText={handleSearchTextChange}
+            listMode="SCROLLVIEW" 
+            zIndex={1000} 
+            zIndexInverse={1000} 
+          />
 
-      <View style={styles.submitButtonContainer}>
-        <Button title="Submit" onPress={handleSubmit} />
-      </View>
-    </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Add a new machinery type"
+            value={newIndustryType}
+            onChangeText={setNewIndustryType}
+            editable={!industryType}
+          />
+
+          <View style={styles.submitButtonContainer}>
+            <Button title="Submit" onPress={handleSubmit} />
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollViewContainer: {
     padding: 20,
+    paddingBottom: 50,
   },
   input: {
     height: 50,
@@ -113,9 +168,6 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 5,
-  },
-  addButtonContainer: {
-    marginBottom: 30,
   },
   submitButtonContainer: {
     marginBottom: 50,
