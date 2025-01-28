@@ -24,7 +24,7 @@ const LabourFormPage = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://10.1.224.44:5000/labour');
+        const response = await fetch('http://192.168.145.98:5000/labour');
         const data = await response.json();
         console.log(data);
         setIndustryOptions(data.labour);
@@ -55,7 +55,7 @@ const LabourFormPage = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const labourResponse = await fetch('http://10.1.224.44:5000/add-labour', {
+        const labourResponse = await fetch('http://192.168.145.98:5000/add-labour', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ const LabourFormPage = () => {
         }
       }
 
-      const response = await fetch('http://10.1.224.44:5000/add-category', {
+      const response = await fetch('http://192.168.145.98:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
