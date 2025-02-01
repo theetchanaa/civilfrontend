@@ -1,54 +1,26 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
-import { Picker } from '@react-native-picker/picker'; // Import Picker component
+import { Picker } from '@react-native-picker/picker';
+import useProjectForm from './ProjectFormIntegration'; // Import the custom hook
 
-const ProjectFormScreen = () => {
-  const [projectName, setProjectName] = useState('');
-  const [estimatedAmount, setEstimatedAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [type, setType] = useState('');
-  const [allocatedAmount, setAllocatedAmount] = useState('');
-  const [tableData, setTableData] = useState([]);
+const ProjectFormScreenUI = () => {
+  const {
+    projectName,
+    setProjectName,
+    estimatedAmount,
+    setEstimatedAmount,
+    category,
+    setCategory,
+    type,
+    setType,
+    allocatedAmount,
+    setAllocatedAmount,
+    tableData,
+    handleProjectSubmit,
+    handleAddRow,
+    categoryTypes
+  } = useProjectForm(); // Use the custom hook to get all the states and handlers
 
-  // Define options for each category
-  const categoryTypes = {
-    labour: ['Mason', 'Shuttering', 'Carpenter', 'Painter', 'Tiles Work', 'Electrician', 'Plumber', 'RR Mason'],
-    machinery: ['Excavators', 'Loaders', 'Cranes', 'Bulldozers', 'Forklifts', 'Compactors', 'Generators', 'Concrete Mixers'],
-    material: ['Cement', 'Bricks', 'M Sand', 'Metal', 'Steel', 'Shuttering Materials', 'Wood', 'Hardwares', 'Paint Shop', 'Tiles', 'Tiles Paste', 'Electrical Materials', 'Plumbing Materials', 'Soling', 'RR Stones'],
-  };
-
-  // Handle form submission for project details
-  const handleProjectSubmit = () => {
-    if (projectName && estimatedAmount) {
-      alert('Project Added!');
-      setProjectName('');
-      setEstimatedAmount('');
-    } else {
-      alert('Please fill in all fields');
-    }
-  };
-
-  // Handle adding a row to the table
-  const handleAddRow = () => {
-    if (category && type && allocatedAmount) {
-      const newRow = {
-        id: String(tableData.length + 1),
-        category: category,
-        type: type,
-        amount: allocatedAmount,
-      };
-      setTableData([...tableData, newRow]);
-
-      // Reset row input fields after adding
-      setCategory('');
-      setType('');
-      setAllocatedAmount('');
-    } else {
-      alert('Please fill in all fields');
-    }
-  };
-
-  // Render each row for the table
   const renderItem = ({ item }) => (
     <View style={styles.row}>
       <Text style={styles.cell}>{item.category}</Text>
@@ -61,7 +33,6 @@ const ProjectFormScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Project Form</Text>
 
-      {/* Project Input Fields */}
       <Text style={styles.label}>Project Name</Text>
       <TextInput
         style={styles.input}
@@ -79,28 +50,26 @@ const ProjectFormScreen = () => {
         keyboardType="numeric"
       />
 
-      {/* Table Header */}
       <View style={styles.header}>
         <Text style={styles.headerCell}>Category</Text>
         <Text style={styles.headerCell}>Type</Text>
         <Text style={styles.headerCell}>Amount Allocated</Text>
       </View>
 
-      {/* Table Data */}
       <FlatList
         data={tableData}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
       />
 
-      {/* Table Row Input Fields */}
       <Text style={styles.rowTitle}>Add Table Row</Text>
 
       <Text style={styles.label}>Category</Text>
       <Picker
         selectedValue={category}
         style={styles.picker}
-        onValueChange={(itemValue) => setCategory(itemValue)}>
+        onValueChange={(itemValue) => setCategory(itemValue)}
+      >
         <Picker.Item label="Select Category" value="" />
         <Picker.Item label="Labour" value="labour" />
         <Picker.Item label="Material" value="material" />
@@ -112,12 +81,16 @@ const ProjectFormScreen = () => {
         selectedValue={type}
         style={styles.picker}
         onValueChange={(itemValue) => setType(itemValue)}
-        enabled={category !== ''} // Enable Type dropdown only after Category is selected
+        enabled={category !== ''}
       >
         <Picker.Item label="Select Type" value="" />
-        {category && categoryTypes[category]?.map((item, index) => (
-          <Picker.Item key={index} label={item} value={item} />
-        ))}
+        {categoryTypes[category] && categoryTypes[category].length > 0 ? (
+          categoryTypes[category].map((item, index) => (
+            <Picker.Item key={index} label={item} value={item} />
+          ))
+        ) : (
+          <Picker.Item label="No types available" value="" />
+        )}
       </Picker>
 
       <Text style={styles.label}>Amount Allocated</Text>
@@ -129,10 +102,8 @@ const ProjectFormScreen = () => {
         keyboardType="numeric"
       />
 
-      {/* Add Row Button */}
       <Button title="Add Row" onPress={handleAddRow} />
 
-      {/* Submit Project Button at the bottom */}
       <View style={styles.submitButtonContainer}>
         <Button title="Submit Project" onPress={handleProjectSubmit} />
       </View>
@@ -140,7 +111,6 @@ const ProjectFormScreen = () => {
   );
 };
 
-// Styles for the form and table
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -188,13 +158,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: 5,
   },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 16,
+    backgroundColor: '#f9f9f9',
+    overflow: 'hidden', // Ensures the picker does not get cut off
+  },
   picker: {
-    height: 40,
+    height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
     marginBottom: 16,
     borderRadius: 5,
-    backgroundColor: '#f9f9f9', // Background color for the picker
+    backgroundColor: '#f9f9f9', // Ensures proper height for Android
   },
   rowTitle: {
     fontSize: 18,
@@ -202,8 +180,8 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   submitButtonContainer: {
-    marginTop: 20, // Adding margin to position the Submit button better
+    marginTop: 20,
   },
 });
 
-export default ProjectFormScreen;
+export default ProjectFormScreenUI;

@@ -24,7 +24,7 @@ const LabourFormPage = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://192.168.145.98:5000/labour');
+        const response = await fetch('http://192.168.151.233:5000/labour');
         const data = await response.json();
         console.log(data);
         setIndustryOptions(data.labour);
