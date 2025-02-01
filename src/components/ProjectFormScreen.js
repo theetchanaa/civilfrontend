@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, ScrollView,FlatList, StyleSheet } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import useProjectForm from './ProjectFormIntegration'; // Import the custom hook
 
@@ -31,6 +31,7 @@ const ProjectFormScreenUI = () => {
 
   return (
     <View style={styles.container}>
+      <ScrollView>
       <Text style={styles.title}>Project Form</Text>
 
       <Text style={styles.label}>Project Name</Text>
@@ -107,6 +108,7 @@ const ProjectFormScreenUI = () => {
       <View style={styles.submitButtonContainer}>
         <Button title="Submit Project" onPress={handleProjectSubmit} />
       </View>
+      </ScrollView>
     </View>
   );
 };
