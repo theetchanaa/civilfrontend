@@ -30,6 +30,19 @@ const HomeScreen = ({ navigation }) => {
 </TouchableOpacity>
 
       </View>
+      <View style={styles.iconWrapper}>
+      <TouchableOpacity
+  style={styles.iconContainer}
+  onPress={() => navigation.navigate('AddExpense')} // 'Add Project' must match the name in the navigator
+>
+  <Image
+    source={require('../../assets/add-project-icon.png')}
+    style={styles.iconImage}
+  />
+  <Text style={styles.iconText}>Add Expense</Text>
+</TouchableOpacity>
+
+      </View>
     </View>
   );
 };

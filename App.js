@@ -7,6 +7,7 @@ import LabourFormScreen from './src/components/LabourFormScreen';
 import MaterialFormScreen from './src/components/MaterialFormScreen';
 import MachineryFormScreen from './src/components/MachineryFormScreen';
 import ProjectFormScreen from './src/components/ProjectFormScreen'; // Import the screen
+import AddExpenseScreen from './src/components/AddExpenseScreen';
 
 const Stack = createStackNavigator();
 
@@ -20,6 +21,7 @@ const App = () => {
         <Stack.Screen name="MaterialForm" component={MaterialFormScreen} />
         <Stack.Screen name="MachineryFormScreen" component={MachineryFormScreen} />
         <Stack.Screen name="ProjectFormScreen" component={ProjectFormScreen} />
+        <Stack.Screen name="AddExpense" component={AddExpenseScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
