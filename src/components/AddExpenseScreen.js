@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+
 import {
   View,
   TextInput,
@@ -18,60 +20,71 @@ const AddExpenseScreen = () => {
   const [selectedDetails, setSelectedDetails] = useState(null);
   const [selectedType, setSelectedType] = useState('');
   const [expense, setExpense] = useState('');
+  const types = ['Labour', 'Materials', 'Machinery']; // Example
 
-  const projects = ['Project A', 'Project B', 'Project C', 'Project D'];
 
-  const rows = [
-    { name: 'John Doe', phone: '1234567890', sector: 'Carpenter' },
-    { name: 'Jane Smith', phone: '9876543210', sector: 'Painter' },
-    { name: 'Mike Johnson', phone: '4567890123', sector: 'Mason' },
-    { name: 'Anna Taylor', phone: '6543210987', sector: 'Shuttering' },
-  ];
-
-  const types = ['Labour', 'Material', 'Machinery'];
-
-  const handleProjectNameChange = (text) => {
+  const handleProjectNameChange = async (text) => {
     setProjectName(text);
-    const filtered = projects.filter((project) =>
-      project.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredProjects(filtered);
+    try {
+      const response = await axios.get(`http://192.168.14.233:5000/search?project_name=${text}&search_text=${searchText}`);
+      setFilteredProjects(response.data.filtered_projects);
+      setFilteredRows(response.data.filtered_workers);
+    } catch (error) {
+      console.error('Error fetching filtered data:', error);
+    }
   };
-
-  const handleSearchChange = (text) => {
+  
+  const handleSearchChange = async (text) => {
     setSearchText(text);
-    const filtered = rows.filter(
-      (row) =>
-        row.name.toLowerCase().includes(text.toLowerCase()) ||
-        row.phone.includes(text)
-    );
-    setFilteredRows(filtered);
+    try {
+      const response = await axios.get(`http://192.168.14.233:5000/search?project_name=${projectName}&search_text=${text}`);
+      setFilteredProjects(response.data.filtered_projects);
+      setFilteredRows(response.data.filtered_workers);
+    } catch (error) {
+      console.error('Error fetching filtered data:', error);
+    }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!projectName || !selectedType || !selectedDetails || !expense) {
       Alert.alert('Error', 'Please fill out all fields before submitting.');
       return;
     }
-
+  
     const data = {
-      projectName,
-      selectedType,
+      project_name: projectName,
+      
       name: selectedDetails.name,
-      phone: selectedDetails.phone,
-      sector: selectedDetails.sector,
-      expense,
+      phone: selectedDetails.id,  // Using phone as user identifier
+      expense_type: selectedDetails.type,
+      expense: parseFloat(expense),
     };
-
-    console.log('Submitted Data:', data);
-    Alert.alert('Success', 'Expense submitted successfully!');
-    // Reset fields
-    setProjectName('');
-    setSelectedType('');
-    setSearchText('');
-    setSelectedDetails(null);
-    setExpense('');
+  
+    try {
+      const response = await fetch('http://192.168.14.233:5000/add_expense', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Expense submitted successfully!');
+        setProjectName('');
+        setSelectedType('');
+        setSearchText('');
+        setSelectedDetails(null);
+        setExpense('');
+      } else {
+        Alert.alert('Error', result.error || 'Failed to add expense.');
+      }
+    } catch (error) {
+      console.error('Error submitting expense:', error);
+      Alert.alert('Error', 'An error occurred while submitting the expense.');
+    }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -91,11 +104,13 @@ const AddExpenseScreen = () => {
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => {
-                  setProjectName(item);
+                  setProjectName(item.projectname); // Correctly access projectname
                   setFilteredProjects([]);
                 }}
               >
-                <Text style={styles.dropdownItem}>{item}</Text>
+                <Text style={styles.dropdownItem}>
+                  {item.projectname} 
+                </Text>
               </TouchableOpacity>
             )}
           />
@@ -151,28 +166,31 @@ const AddExpenseScreen = () => {
                 }}
               >
                 <Text style={styles.dropdownItem}>
-                  {item.name} ({item.phone})
+                  {item.name} {item.phone && `(${item.phone})`}
                 </Text>
+
               </TouchableOpacity>
             )}
           />
         </View>
       )}
 
-      {/* Selected Details */}
+      {/* Selected Details */   }
+
       {selectedDetails && (
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailText}>
-            <Text style={styles.bold}>Name:</Text> {selectedDetails.name}
-          </Text>
-          <Text style={styles.detailText}>
-            <Text style={styles.bold}>Phone:</Text> {selectedDetails.phone}
-          </Text>
-          <Text style={styles.detailText}>
-            <Text style={styles.bold}>Sector:</Text> {selectedDetails.sector}
-          </Text>
-        </View>
-      )}
+  <View style={styles.detailsContainer}>
+    <Text style={styles.detailText}>
+      <Text style={styles.bold}>Name:</Text> {selectedDetails.name}
+    </Text>
+    <Text style={styles.detailText}>
+      <Text style={styles.bold}>Phone:</Text> {selectedDetails.id || 'Not available'}
+    </Text>
+    <Text style={styles.detailText}>
+      <Text style={styles.bold}>Sector:</Text> {selectedDetails.type || 'Not available'}
+    </Text>
+  </View>
+)}
+
 
       {/* Expense Input */}
       <Text style={styles.label}>Enter Expense:</Text>
@@ -183,6 +201,8 @@ const AddExpenseScreen = () => {
         onChangeText={setExpense}
         keyboardType="numeric"
       />
+
+      
 
       {/* Submit Button */}
       <View style={styles.submitButton}>
