@@ -17,7 +17,7 @@ const AddCategoryButton = ({ navigation }) => {
         />
       </TouchableOpacity>
     </View>
-  );
+  );                   
 };
 
 const styles = StyleSheet.create({
