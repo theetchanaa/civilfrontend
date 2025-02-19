@@ -12,7 +12,7 @@ const useProjectForm = () => {
 
   useEffect(() => {
     if (category) {
-      axios.get(`http://192.168.14.233:5000/${category}`)
+      axios.get(`http://192.168.1.4:5000/${category}`)
         .then(response => {
           const types = response.data[category] || [];
           const validTypes = types.filter(item => item && item.trim() !== '');
@@ -44,7 +44,7 @@ const useProjectForm = () => {
         })),
       };
   
-      axios.post('http://192.168.14.233:5000/submit_project', data)
+      axios.post('http://192.168.1.4:5000/submit_project', data)
         .then(response => {
           alert('Project and payments added successfully!');
           setProjectName('');

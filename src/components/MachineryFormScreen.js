@@ -14,7 +14,7 @@ const MachineryFormScreen = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://192.168.14.233:5000/machinery');
+        const response = await fetch('http://192.168.1.4:5000/machinery');
         const data = await response.json();
         setIndustryOptions(data.machinery);
         setFilteredIndustryOptions(data.machinery);
@@ -42,7 +42,7 @@ const MachineryFormScreen = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const machineryResponse = await fetch('http://192.168.14.233:5000/add-machinery', {
+        const machineryResponse = await fetch('http://192.168.1.4:5000/add-machinery', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ const MachineryFormScreen = () => {
         alert('Success: New machinery type added successfully!');
       }
 
-      const response = await fetch('http://192.168.14.233:5000/add-category', {
+      const response = await fetch('http://192.168.1.4:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
