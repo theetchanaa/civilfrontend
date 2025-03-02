@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 
-const API_URL = 'http://192.168.1.4:5000/projects'; // Update with your backend URL
+const API_URL = 'http://192.168.234.233:5000/projects'; // Update with your backend URL
 
 const SearchProject = () => {
   const [searchQuery, setSearchQuery] = useState('');
