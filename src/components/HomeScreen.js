@@ -57,7 +57,21 @@ const HomeScreen = ({ navigation }) => {
   <Text style={styles.iconText}>SearchProject</Text>
 </TouchableOpacity>
 </View>
+<View style={styles.iconWrapper}>
+      <TouchableOpacity
+  style={styles.iconContainer}
+  onPress={() => navigation.navigate('SearchUserScreen')} // 'Add Project' must match the name in the navigator
+>
+  <Image
+    source={require('../../assets/search-user-icon.jpeg')}
+    style={styles.iconImage}
+  />
+  <Text style={styles.iconText}>Search User</Text>
+</TouchableOpacity>
+
+      </View>
     </View>
+    
   );
 };
 
