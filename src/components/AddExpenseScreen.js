@@ -6,9 +6,9 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
-const API_URL = 'http://10.1.225.144:5000/projects'; // Update with your backend URL
-const FETCH_ID_URL = 'http://10.1.225.144:5000/get_project_payment_details'; // Replace with actual endpoint
-const ADD_EXPENSE_URL = 'http://10.1.225.144:5000/add_expense';
+const API_URL = 'http://192.168.161.250:5000/projects'; // Update with your backend URL
+const FETCH_ID_URL = 'http://192.168.161.250:5000/get_project_payment_details'; // Replace with actual endpoint
+const ADD_EXPENSE_URL = 'http://192.168.161.250:5000/add_expense';
 
 const AddExpenseScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,7 +70,7 @@ const AddExpenseScreen = () => {
   const fetchPickerOptions = async (category) => {
     try {
       console.log(`Fetching options for category: ${category}`);
-      const response = await axios.get(`http://10.1.225.144:5000/${category}`);
+      const response = await axios.get(`http://192.168.161.250:5000/${category}`);
       
       console.log('API Response:', response.data);
 

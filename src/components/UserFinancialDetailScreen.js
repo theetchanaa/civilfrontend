@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -12,7 +12,11 @@ import { useRoute } from '@react-navigation/native';
 
 const UserFinancialDetails = () => {
   const { params } = useRoute();
-  const { user } = params; 
+  const user = params?.user || {}; // Ensure user object exists
+
+  useEffect(() => {
+    console.log('Received user data:', user); // Debugging log
+  }, [user]);
 
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
@@ -39,8 +43,8 @@ const UserFinancialDetails = () => {
   return (
     <View style={styles.container}>
       <View style={styles.userInfoContainer}>
-        <Text style={styles.userInfoText}>Name: {user.name}</Text>
-        <Text style={styles.userInfoText}>ID: {user.phone}</Text>
+        <Text style={styles.userInfoText}>Name: {user.category_name || 'N/A'}</Text>
+        <Text style={styles.userInfoText}>ID: {user.category_id || 'N/A'}</Text>
       </View>
 
       <View style={styles.dropdownRow}>
@@ -105,7 +109,7 @@ const UserFinancialDetails = () => {
         </View>
       )}
 
-{selectedProject && selectedDate && (
+      {selectedProject && selectedDate && (
         <View>
           <View style={styles.tableContainer}>
             <Text style={styles.tableHeader}>Financial Details</Text>
@@ -131,106 +135,22 @@ const UserFinancialDetails = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f8f8f8',
-  },
-  userInfoContainer: {
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#ddd',
-    borderRadius: 8,
-  },
-  userInfoText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  dropdownRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    marginBottom: 16,
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  buttonText: {
-    fontSize: 16,
-  },
-  dropdown: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 5,
-    maxHeight: 150,
-  },
-  dropdownItem: {
-    padding: 12,
-    fontSize: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-    marginBottom: 16,
-  },
-  tableContainer: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 3,
-  },
-  tableHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  tableRowHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 10,
-    backgroundColor: '#ddd',
-    borderRadius: 5,
-  },
-  tableHeaderText: {
-    fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 10,
-  },
-  tableCell: {
-    flex: 1,
-    textAlign: 'center',
-  },
-  totalAmount: {
-    marginTop: 20,
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 8,
-    elevation: 3,
-  },
+  container: { flex: 1, padding: 16, backgroundColor: '#f8f8f8' },
+  userInfoContainer: { marginBottom: 20, padding: 10, backgroundColor: '#ddd', borderRadius: 8 },
+  userInfoText: { fontSize: 18, fontWeight: 'bold' },
+  dropdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  dropdownButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderWidth: 1, borderColor: '#ccc', borderRadius: 20, backgroundColor: '#fff', marginBottom: 16, flex: 1, marginHorizontal: 5 },
+  buttonText: { fontSize: 16 },
+  dropdown: { backgroundColor: '#fff', borderRadius: 8, elevation: 5, maxHeight: 150 },
+  dropdownItem: { padding: 12, fontSize: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#fff', marginBottom: 16 },
+  tableContainer: { marginTop: 20, padding: 10, backgroundColor: '#fff', borderRadius: 8, elevation: 3 },
+  tableHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
+  tableRowHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 10, backgroundColor: '#ddd', borderRadius: 5 },
+  tableHeaderText: { fontWeight: 'bold', flex: 1, textAlign: 'center' },
+  tableRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 10 },
+  tableCell: { flex: 1, textAlign: 'center' },
+  totalAmount: { marginTop: 20, fontSize: 18, fontWeight: 'bold', textAlign: 'center', backgroundColor: '#fff', padding: 10, borderRadius: 8, elevation: 3 },
 });
 
 export default UserFinancialDetails;

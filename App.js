@@ -9,8 +9,10 @@ import MachineryFormScreen from './src/components/MachineryFormScreen';
 import ProjectFormScreen from './src/components/ProjectFormScreen'; // Import the screen
 import AddExpenseScreen from './src/components/AddExpenseScreen';
 import SearchProject from './src/components/SearchProject';
+import projectDetails from './src/components/ProjectDetails';
 import SearchUserScreen from './src/components/SearchUserScreen';
 import UserFinancialDetailScreen from './src/components/UserFinancialDetailScreen';
+import ProjectDetails from './src/components/ProjectDetails';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +28,7 @@ const App = () => {
         <Stack.Screen name="ProjectFormScreen" component={ProjectFormScreen} />
         <Stack.Screen name="AddExpense" component={AddExpenseScreen} />
         <Stack.Screen name="SearchProject" component={SearchProject} />
+        <Stack.Screen name="ProjectDetails" component={ProjectDetails} />
         <Stack.Screen name="SearchUserScreen" component={SearchUserScreen} /> 
         <Stack.Screen name="UserFinancialDetailScreen" component={UserFinancialDetailScreen} />
       </Stack.Navigator>

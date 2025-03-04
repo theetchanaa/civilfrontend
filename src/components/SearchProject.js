@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const API_URL = 'http://10.1.225.144:5000/projects'; // Update with your backend URL
+const API_URL = 'http://192.168.161.250:5000/projects'; // Update with your backend URL
 
 const SearchProject = () => {
+  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchProjects();
@@ -16,23 +19,48 @@ const SearchProject = () => {
   const fetchProjects = async () => {
     try {
       const response = await fetch(API_URL);
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
+      }
       const data = await response.json();
       setProjects(data.projects);
       setFilteredProjects(data.projects);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching projects:', error);
+      setError(error.message);
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (query) => {
+  const handleSearch = useCallback((query) => {
     setSearchQuery(query);
     const filtered = projects.filter((project) =>
       project.projectname.toLowerCase().includes(query.toLowerCase())
     );
     setFilteredProjects(filtered);
+  }, [projects]);
+
+  const navigateToProjectDetails = (project) => {
+    console.log(`Navigating to ProjectDetails with project:`, project); // Debugging log
+    navigation.navigate('ProjectDetails', { project }); // Pass the full project object
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0078D4" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -43,23 +71,23 @@ const SearchProject = () => {
         onChangeText={handleSearch}
       />
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#0078D4" />
-      ) : (
-        <ScrollView style={styles.tabContainer}>
-          {filteredProjects.map((project, index) => (
-            <View key={index} style={styles.projectContainer}>
-              <View style={styles.tab}>
-                <Text style={styles.tabText}>{project.projectname}</Text>
-              </View>
-              <View style={styles.projectDetails}>
-                <Text style={styles.detailText}>Quoted Amount: ${project.quotedamount}</Text>
-                <Text style={styles.detailText}>Total Expense: ${project.totexpense}</Text>
-              </View>
+      <ScrollView style={styles.tabContainer}>
+        {filteredProjects.map((project, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.projectContainer}
+            onPress={() => navigateToProjectDetails(project)} // Pass the selected project object
+          >
+            <View style={styles.tab}>
+              <Text style={styles.tabText}>{project.projectname}</Text>
             </View>
-          ))}
-        </ScrollView>
-      )}
+            <View style={styles.projectDetails}>
+              <Text style={styles.detailText}>Quoted Amount: ${project.quotedamount}</Text>
+              <Text style={styles.detailText}>Total Expense: ${project.totexpense}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
     </View>
   );
 };
@@ -111,6 +139,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     marginBottom: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
   },
 });
 
