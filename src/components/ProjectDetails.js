@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-const API_URL = 'http://192.168.161.250:5000'; // Update with your backend URL
+const API_URL = `http://192.168.234.233:5000`; // Update with your backend URL
 
 const ProjectDetails = () => {
   const route = useRoute();

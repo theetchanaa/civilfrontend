@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const API_URL = 'http://192.168.161.250:5000/projects'; // Update with your backend URL
+const API_URL = 'http://192.168.234.233:5000/projects'; // Update with your backend URL
 
 const SearchProject = () => {
   const navigation = useNavigation();
