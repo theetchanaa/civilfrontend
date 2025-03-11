@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <View style={styles.iconWrapper}>
+      <View style={[styles.gridContainer, { marginTop: 60 }]}>
         <TouchableOpacity
           style={styles.iconContainer}
           onPress={() => navigation.navigate('CategorySelection')}
@@ -15,94 +15,106 @@ const HomeScreen = ({ navigation }) => {
           />
           <Text style={styles.iconText}>Add User</Text>
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.iconWrapper}>
-      <TouchableOpacity
-  style={styles.iconContainer}
-  onPress={() => navigation.navigate('ProjectFormScreen')} // 'Add Project' must match the name in the navigator
->
-  <Image
-    source={require('../../assets/add-project-icon.png')}
-    style={styles.iconImage}
-  />
-  <Text style={styles.iconText}>Add Project</Text>
-</TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate('ProjectFormScreen')}
+        >
+          <Image
+            source={require('../../assets/add-project-icon.png')}
+            style={styles.iconImage}
+          />
+          <Text style={styles.iconText}>Add Project</Text>
+        </TouchableOpacity>
 
-      </View>
-      <View style={styles.iconWrapper}>
-      <TouchableOpacity
-  style={styles.iconContainer}
-  onPress={() => navigation.navigate('AddExpense')} // 'Add Project' must match the name in the navigator
->
-  <Image
-    source={require('../../assets/add-project-icon.png')}
-    style={styles.iconImage}
-  />
-  <Text style={styles.iconText}>Add Expense</Text>
-</TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate('AddExpense')}
+        >
+          <Image
+            source={require('../../assets/add-project-icon.png')}
+            style={styles.iconImage}
+          />
+          <Text style={styles.iconText}>Add Expense</Text>
+        </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate('SearchProject')}
+        >
+          <Image
+            source={require('../../assets/add-project-icon.png')}
+            style={styles.iconImage}
+          />
+          <Text style={styles.iconText}>Search Project</Text>
+        </TouchableOpacity>
 
-      </View>
-      <View style={styles.iconWrapper}>
-
-      <TouchableOpacity
-  style={styles.iconContainer}
-  onPress={() => navigation.navigate('SearchProject')} // 'Add Project' must match the name in the navigator
->
-  <Image
-    source={require('../../assets/add-project-icon.png')}
-    style={styles.iconImage}
-  />
-  <Text style={styles.iconText}>SearchProject</Text>
-</TouchableOpacity>
-</View>
-<View style={styles.iconWrapper}>
-      <TouchableOpacity
-  style={styles.iconContainer}
-  onPress={() => navigation.navigate('SearchUserScreen')} // 'Add Project' must match the name in the navigator
->
-  <Image
-    source={require('../../assets/search-user-icon.jpeg')}
-    style={styles.iconImage}
-  />
-  <Text style={styles.iconText}>Search User</Text>
-</TouchableOpacity>
-
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate('SearchUserScreen')}
+        >
+          <Image
+            source={require('../../assets/search-user-icon.jpeg')}
+            style={styles.iconImage}
+          />
+          <Text style={styles.iconText}>Search User</Text>
+        </TouchableOpacity>
       </View>
     </View>
-    
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#F5F7FA',
   },
-  iconWrapper: {
-    marginBottom: 20, // Add space between icons
+  header: {
+    padding: 20,
+    paddingTop: 40,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    padding: 16,
   },
   iconContainer: {
-    justifyContent: 'center',
+    width: '45%',
+    aspectRatio: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     alignItems: 'center',
-    width: 120,
-    height: 120,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    elevation: 5,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   iconImage: {
-    width: 50,
-    height: 50,
-    marginBottom: 8,
+    width: 48,
+    height: 48,
+    marginBottom: 12,
   },
   iconText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: 'bold',
+    fontWeight: '500',
+    color: '#2E3A59',
+    textAlign: 'center',
   },
 });
 

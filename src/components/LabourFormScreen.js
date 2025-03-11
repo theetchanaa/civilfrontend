@@ -24,7 +24,7 @@ const LabourFormPage = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://10.1.225.144:5000/labour');
+        const response = await fetch('http://192.168.234.233:5000/labour');
         const data = await response.json();
         console.log(data);
         setIndustryOptions(data.labour);
@@ -55,7 +55,7 @@ const LabourFormPage = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const labourResponse = await fetch('http://10.1.225.144:5000/add-labour', {
+        const labourResponse = await fetch('http://192.168.234.233:5000/add-labour', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ const LabourFormPage = () => {
         }
       }
 
-      const response = await fetch('http://10.1.225.144:5000/add-category', {
+      const response = await fetch('http://192.168.234.233:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,56 +107,74 @@ const LabourFormPage = () => {
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled={true}
         >
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Name"
-            value={name}
-            onChangeText={setName}
-          />
+          <View style={styles.formContainer}>
+            <TextInput
+              style={[styles.input, styles.inputSpacing]}
+              placeholder="Enter Name"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#999"
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Phone Number"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-          />
+            <TextInput
+              style={[styles.input, styles.inputSpacing]}
+              placeholder="Enter Phone Number"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              placeholderTextColor="#999"
+            />
 
-          <DropDownPicker
-            open={openIndustry}
-            value={industryType}
-            items={[
-              { label: "None", value: null },
-              ...filteredIndustryOptions
-                ?.filter((option) => option)
-                .map((option, index) => ({
-                  label: option,
-                  value: option,
-                  key: index,
-                })),
-            ]}
-            setOpen={setOpenIndustry}
-            setValue={setIndustryType}
-            placeholder="Select Industry Type"
-            searchable={true}
-            searchPlaceholder="Search industry..."
-            style={styles.dropdown}
-            onChangeSearchText={handleSearchTextChange}
-            listMode="SCROLLVIEW" 
-            zIndex={1000} 
-            zIndexInverse={1000} 
-          />
+            <View style={styles.dropdownWrapper}>
+              <DropDownPicker
+                open={openIndustry}
+                value={industryType}
+                items={[
+                  { label: "None", value: null },
+                  ...filteredIndustryOptions
+                    ?.filter((option) => option)
+                    .map((option, index) => ({
+                      label: option,
+                      value: option,
+                      key: index,
+                    })),
+                ]}
+                setOpen={setOpenIndustry}
+                setValue={setIndustryType}
+                placeholder="Select Industry Type"
+                searchable={true}
+                searchPlaceholder="Search industry..."
+                style={styles.dropdown}
+                dropDownContainerStyle={styles.dropdownContainer}
+                textStyle={styles.dropdownText}
+                onChangeSearchText={handleSearchTextChange}
+                listMode="MODAL"
+                modalProps={{
+                  animationType: "slide"
+                }}
+                modalContentContainerStyle={styles.modalContent}
+                modalTitle="Select Industry Type"
+                zIndex={1000}
+                zIndexInverse={1000}
+              />
+            </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Add a new industry type"
-            value={newIndustryType}
-            onChangeText={setNewIndustryType}
-            editable={!industryType}
-          />
+            <TextInput
+              style={[styles.input, styles.inputSpacing, !industryType ? {} : styles.disabledInput]}
+              placeholder="Add a new industry type"
+              value={newIndustryType}
+              onChangeText={setNewIndustryType}
+              editable={!industryType}
+              placeholderTextColor="#999"
+            />
 
-          <View style={styles.submitButtonContainer}>
-            <Button title="Submit" onPress={handleSubmit} />
+            <View style={styles.submitButtonContainer}>
+              <Button 
+                title="Submit"
+                onPress={handleSubmit}
+                color="#2E3A59"
+              />
+            </View>
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -167,29 +185,68 @@ const LabourFormPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F5F7FA',
   },
   scrollViewContainer: {
+    flexGrow: 1,
     padding: 20,
-    paddingBottom: 50,
+  },
+  formContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    backgroundColor: '#F5F7FA',
+    borderColor: '#E4E9F2',
     borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    color: '#2E3A59',
+  },
+  inputSpacing: {
     marginBottom: 15,
-    paddingLeft: 10,
-    borderRadius: 5,
+  },
+  disabledInput: {
+    backgroundColor: '#EAEEF5',
+    color: '#999',
+  },
+  dropdownWrapper: {
+    marginBottom: 15,
+    zIndex: 1000,
   },
   dropdown: {
     height: 50,
-    marginBottom: 15,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
+    backgroundColor: '#F5F7FA',
+    borderColor: '#E4E9F2',
+    borderRadius: 10,
+  },
+  dropdownContainer: {
+    borderColor: '#E4E9F2',
+    borderRadius: 10,
+    maxHeight: 200,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#2E3A59',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
   },
   submitButtonContainer: {
-    marginBottom: 50,
-  },
+    marginTop: 10,
+  }
 });
 
 export default LabourFormPage;
