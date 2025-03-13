@@ -9,6 +9,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Text,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
@@ -24,7 +25,7 @@ const MaterialFormScreen = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://10.1.225.144:5000/material');
+        const response = await fetch('http://192.168.234.250:5000/material');
         const data = await response.json();
         console.log(data);
         setIndustryOptions(data.material);
@@ -55,7 +56,7 @@ const MaterialFormScreen = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const labourResponse = await fetch('http://10.1.225.144:5000/add-material', {
+        const labourResponse = await fetch('http://192.168.234.250:5000/add-material', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -75,7 +76,7 @@ const MaterialFormScreen = () => {
         }
       }
 
-      const response = await fetch('http://10.1.225.144:5000/add-category', {
+      const response = await fetch('http://192.168.234.250:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,75 +98,105 @@ const MaterialFormScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : null}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollViewContainer}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled={true}
-        >
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Name"
-            value={name}
-            onChangeText={setName}
-          />
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Add Material</Text>
+      </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Phone Number"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-          />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        style={styles.formContainer}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollViewContainer}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+          >
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Name"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#2E3A59"
+            />
 
-          <DropDownPicker
-            open={openIndustry}
-            value={industryType}
-            items={[
-              { label: "None", value: null },
-              ...filteredIndustryOptions
-                ?.filter((option) => option)
-                .map((option, index) => ({
-                  label: option,
-                  value: option,
-                  key: index,
-                })),
-            ]}
-            setOpen={setOpenIndustry}
-            setValue={setIndustryType}
-            placeholder="Select Material Type"
-            searchable={true}
-            searchPlaceholder="Search material..."
-            style={styles.dropdown}
-            onChangeSearchText={handleSearchTextChange}
-            listMode="SCROLLVIEW" 
-            zIndex={1000} 
-            zIndexInverse={1000} 
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Phone Number"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              placeholderTextColor="#2E3A59"
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Add a new material type"
-            value={newIndustryType}
-            onChangeText={setNewIndustryType}
-            editable={!industryType}
-          />
+            <DropDownPicker
+              open={openIndustry}
+              value={industryType}
+              items={[
+                { label: "None", value: null },
+                ...filteredIndustryOptions
+                  ?.filter((option) => option)
+                  .map((option, index) => ({
+                    label: option,
+                    value: option,
+                    key: index,
+                  })),
+              ]}
+              setOpen={setOpenIndustry}
+              setValue={setIndustryType}
+              placeholder="Select Material Type"
+              searchable={true}
+              searchPlaceholder="Search material..."
+              style={styles.dropdown}
+              onChangeSearchText={handleSearchTextChange}
+              listMode="SCROLLVIEW"
+              zIndex={1000}
+              zIndexInverse={1000}
+              dropDownContainerStyle={styles.dropDownContainer}
+              textStyle={styles.dropdownText}
+              placeholderStyle={styles.dropdownPlaceholder}
+            />
 
-          <View style={styles.submitButtonContainer}>
-            <Button title="Submit" onPress={handleSubmit} />
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+            <TextInput
+              style={styles.input}
+              placeholder="Add a new material type"
+              value={newIndustryType}
+              onChangeText={setNewIndustryType}
+              editable={!industryType}
+              placeholderTextColor="#2E3A59"
+            />
+
+            <View style={styles.submitButtonContainer}>
+              <Button 
+                title="Submit" 
+                onPress={handleSubmit}
+                color="#2E3A59"
+              />
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+  header: {
+    backgroundColor: '#2E3A59',
+    padding: 20,
+    paddingTop: 40,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  formContainer: {
     flex: 1,
   },
   scrollViewContainer: {
@@ -174,18 +205,31 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    borderColor: '#2E3A59',
     borderWidth: 1,
     marginBottom: 15,
     paddingLeft: 10,
     borderRadius: 5,
+    backgroundColor: '#FFFFFF',
+    color: '#2E3A59',
   },
   dropdown: {
     height: 50,
     marginBottom: 15,
-    borderColor: '#ccc',
+    borderColor: '#2E3A59',
     borderWidth: 1,
     borderRadius: 5,
+    backgroundColor: '#FFFFFF',
+  },
+  dropDownContainer: {
+    borderColor: '#2E3A59',
+    backgroundColor: '#FFFFFF',
+  },
+  dropdownText: {
+    color: '#2E3A59',
+  },
+  dropdownPlaceholder: {
+    color: '#2E3A59',
   },
   submitButtonContainer: {
     marginBottom: 50,

@@ -29,7 +29,7 @@ const SearchUserScreen = ({ navigation }) => {
     setShowCategoryDropdown(false);
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.234.233:5000/${category}`);
+      const response = await fetch(`http://192.168.234.250:5000/${category}`);
       const data = await response.json();
       const typesList = data[category] || [];
       setTypes(typesList.filter(item => item !== null && item.trim() !== ''));
@@ -48,7 +48,7 @@ const SearchUserScreen = ({ navigation }) => {
     setShowTypeDropdown(false);
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.234.233:5000/get_categories?type=${type}`);
+      const response = await fetch(`http://192.168.234.250:5000/get_categories?type=${type}`);
       const data = await response.json();
       setCategories(data.categories || []);
       setFilteredCategories(data.categories || []);
@@ -72,107 +72,211 @@ const SearchUserScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Search by Name or ID"
-        value={searchText}
-        onChangeText={handleSearchChange}
-      />
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.dropdownButton}
-          onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
-        >
-          <Text style={styles.buttonText}>{selectedCategory}</Text>
-          <AntDesign name="down" size={16} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.dropdownButton}
-          onPress={() => setShowTypeDropdown(!showTypeDropdown)}
-          disabled={types.length === 0}
-        >
-          <Text style={styles.buttonText}>{selectedType}</Text>
-          <AntDesign name="down" size={16} color="black" />
-        </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Search Projects</Text>
       </View>
 
-      {showCategoryDropdown && (
-        <View style={styles.dropdown}>
-          <FlatList
-            data={categoryOptions}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handleCategorySelection(item)}>
-                <Text style={styles.dropdownItem}>{item}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
+      <View style={styles.searchSection}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by Name or ID"
+          placeholderTextColor="#8F9BB3"
+          value={searchText}
+          onChangeText={handleSearchChange}
+        />
 
-      {loading ? (
-        <ActivityIndicator size="large" color="blue" />
-      ) : (
-        showTypeDropdown && types.length > 0 && (
-          <View style={styles.dropdown}>
-            <TextInput
-              style={styles.input}
-              placeholder="Search Type"
-              value={typeSearch}
-              onChangeText={setTypeSearch}
-            />
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+          >
+            <Text style={styles.filterButtonText}>{selectedCategory}</Text>
+            <AntDesign name="down" size={16} color="#2E3A59" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.filterButton, types.length === 0 && styles.disabledButton]}
+            onPress={() => setShowTypeDropdown(!showTypeDropdown)}
+            disabled={types.length === 0}
+          >
+            <Text style={styles.filterButtonText}>{selectedType}</Text>
+            <AntDesign name="down" size={16} color="#2E3A59" />
+          </TouchableOpacity>
+        </View>
+
+        {showCategoryDropdown && (
+          <View style={styles.dropdownMenu}>
             <FlatList
-              data={types.filter((type) => type.toLowerCase().includes(typeSearch.toLowerCase()))}
+              data={categoryOptions}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => handleTypeSelection(item)}>
-                  <Text style={styles.dropdownItem}>{item}</Text>
+                <TouchableOpacity style={styles.dropdownItem} onPress={() => handleCategorySelection(item)}>
+                  <Text style={styles.dropdownText}>{item}</Text>
                 </TouchableOpacity>
               )}
             />
           </View>
-        )
-      )}
+        )}
 
-      {categories.length > 0 && (
-        <View style={styles.userList}>
-          <View style={styles.tableHeader}>
-            <Text style={styles.tableHeaderText}>Category Name</Text>
-            <Text style={styles.tableHeaderText}>Category ID</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color="#2E3A59" style={styles.loader} />
+        ) : (
+          showTypeDropdown && types.length > 0 && (
+            <View style={styles.dropdownMenu}>
+              <TextInput
+                style={styles.dropdownSearch}
+                placeholder="Search Type"
+                placeholderTextColor="#8F9BB3"
+                value={typeSearch}
+                onChangeText={setTypeSearch}
+              />
+              <FlatList
+                data={types.filter((type) => type.toLowerCase().includes(typeSearch.toLowerCase()))}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.dropdownItem} onPress={() => handleTypeSelection(item)}>
+                    <Text style={styles.dropdownText}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          )
+        )}
+
+        {categories.length > 0 && (
+          <View style={styles.resultsContainer}>
+            <View style={styles.resultsHeader}>
+              <Text style={styles.columnHeader}>Category Name</Text>
+              <Text style={styles.columnHeader}>Category ID</Text>
+            </View>
+            <FlatList
+              data={filteredCategories}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={styles.resultRow}
+                  onPress={() => navigation.navigate('UserFinancialDetailScreen', { user: item })}
+                >
+                  <Text style={styles.resultText}>{item.category_name}</Text>
+                  <Text style={styles.resultText}>{item.category_id}</Text>
+                </TouchableOpacity>
+              )}
+            />
           </View>
-          <FlatList
-            data={filteredCategories}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity 
-                style={styles.tableRow} 
-                onPress={() => navigation.navigate('UserFinancialDetailScreen', { user: item })}
-              >
-                <Text style={styles.tableCell}>{item.category_name}</Text>
-                <Text style={styles.tableCell}>{item.category_id}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
+        )}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f8f8f8' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#fff', marginBottom: 16 },
-  dropdown: { marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, elevation: 5, maxHeight: 280, overflow: 'hidden' },
-  dropdownItem: { padding: 12, fontSize: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  dropdownButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderWidth: 1, borderColor: '#ccc', borderRadius: 20, backgroundColor: '#fff', flex: 1, marginHorizontal: 5 },
-  buttonText: { fontSize: 16 },
-  userList: { marginTop: 20, backgroundColor: '#fff', borderRadius: 8, padding: 10 },
-  tableHeader: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#ddd', paddingBottom: 5, marginBottom: 5 },
-  tableHeaderText: { fontSize: 16, fontWeight: 'bold' },
-  tableRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 5, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  tableCell: { fontSize: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+  header: {
+    backgroundColor: '#2E3A59',
+    padding: 20,
+    paddingTop: 40,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  searchSection: {
+    padding: 16,
+  },
+  searchInput: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    color: '#2E3A59',
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  filterButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 15,
+    marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+  },
+  filterButtonText: {
+    fontSize: 16,
+    color: '#2E3A59',
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  dropdownMenu: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    maxHeight: 250,
+  },
+  dropdownItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#2E3A59',
+  },
+  dropdownSearch: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+    fontSize: 16,
+    color: '#2E3A59',
+  },
+  resultsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+  },
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 15,
+    backgroundColor: '#2E3A59',
+  },
+  columnHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  resultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+  },
+  resultText: {
+    fontSize: 16,
+    color: '#2E3A59',
+  },
+  loader: {
+    marginVertical: 20,
+  },
 });
 
 export default SearchUserScreen;

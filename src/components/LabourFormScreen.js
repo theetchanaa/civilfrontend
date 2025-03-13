@@ -9,6 +9,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Text,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
@@ -24,7 +25,7 @@ const LabourFormPage = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://192.168.234.233:5000/labour');
+        const response = await fetch('http://192.168.234.250:5000/labour');
         const data = await response.json();
         console.log(data);
         setIndustryOptions(data.labour);
@@ -55,7 +56,7 @@ const LabourFormPage = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const labourResponse = await fetch('http://192.168.234.233:5000/add-labour', {
+        const labourResponse = await fetch('http://192.168.234.250:5000/add-labour', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -75,7 +76,7 @@ const LabourFormPage = () => {
         }
       }
 
-      const response = await fetch('http://192.168.234.233:5000/add-category', {
+      const response = await fetch('http://192.168.234.250:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,88 +98,84 @@ const LabourFormPage = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : null}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollViewContainer}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled={true}
-        >
-          <View style={styles.formContainer}>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Add Labour</Text>
+      </View>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        style={styles.formContainer}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollViewContainer}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+          >
             <TextInput
-              style={[styles.input, styles.inputSpacing]}
+              style={styles.input}
               placeholder="Enter Name"
               value={name}
               onChangeText={setName}
-              placeholderTextColor="#999"
+              placeholderTextColor="#2E3A59"
             />
 
             <TextInput
-              style={[styles.input, styles.inputSpacing]}
+              style={styles.input}
               placeholder="Enter Phone Number"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
-              placeholderTextColor="#999"
+              placeholderTextColor="#2E3A59"
             />
 
-            <View style={styles.dropdownWrapper}>
-              <DropDownPicker
-                open={openIndustry}
-                value={industryType}
-                items={[
-                  { label: "None", value: null },
-                  ...filteredIndustryOptions
-                    ?.filter((option) => option)
-                    .map((option, index) => ({
-                      label: option,
-                      value: option,
-                      key: index,
-                    })),
-                ]}
-                setOpen={setOpenIndustry}
-                setValue={setIndustryType}
-                placeholder="Select Industry Type"
-                searchable={true}
-                searchPlaceholder="Search industry..."
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
-                textStyle={styles.dropdownText}
-                onChangeSearchText={handleSearchTextChange}
-                listMode="MODAL"
-                modalProps={{
-                  animationType: "slide"
-                }}
-                modalContentContainerStyle={styles.modalContent}
-                modalTitle="Select Industry Type"
-                zIndex={1000}
-                zIndexInverse={1000}
-              />
-            </View>
+            <DropDownPicker
+              open={openIndustry}
+              value={industryType}
+              items={[
+                { label: "None", value: null },
+                ...filteredIndustryOptions
+                  ?.filter((option) => option)
+                  .map((option, index) => ({
+                    label: option,
+                    value: option,
+                    key: index,
+                  })),
+              ]}
+              setOpen={setOpenIndustry}
+              setValue={setIndustryType}
+              placeholder="Select Labour Type"
+              searchable={true}
+              searchPlaceholder="Search labour..."
+              style={styles.dropdown}
+              onChangeSearchText={handleSearchTextChange}
+              listMode="SCROLLVIEW"
+              zIndex={1000}
+              zIndexInverse={1000}
+              dropDownContainerStyle={styles.dropDownContainer}
+              textStyle={styles.dropdownText}
+              placeholderStyle={styles.dropdownPlaceholder}
+            />
 
             <TextInput
-              style={[styles.input, styles.inputSpacing, !industryType ? {} : styles.disabledInput]}
-              placeholder="Add a new industry type"
+              style={styles.input}
+              placeholder="Add a new labour type"
               value={newIndustryType}
               onChangeText={setNewIndustryType}
               editable={!industryType}
-              placeholderTextColor="#999"
+              placeholderTextColor="#2E3A59"
             />
 
-            <View style={styles.submitButtonContainer}>
-              <Button 
-                title="Submit"
-                onPress={handleSubmit}
-                color="#2E3A59"
-              />
-            </View>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+            <Button
+              title="Submit"
+              onPress={handleSubmit}
+              color="#2E3A59"
+            />
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -187,65 +184,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F7FA',
   },
-  scrollViewContainer: {
-    flexGrow: 1,
+  header: {
+    backgroundColor: '#2E3A59',
     padding: 20,
+    paddingTop: 40,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   formContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
+    flex: 1,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  },
+  scrollViewContainer: {
+    flexGrow: 1,
   },
   input: {
-    height: 50,
-    backgroundColor: '#F5F7FA',
-    borderColor: '#E4E9F2',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 15,
+    borderColor: '#E4E9F2',
     fontSize: 16,
     color: '#2E3A59',
   },
-  inputSpacing: {
-    marginBottom: 15,
-  },
-  disabledInput: {
-    backgroundColor: '#EAEEF5',
-    color: '#999',
-  },
-  dropdownWrapper: {
-    marginBottom: 15,
-    zIndex: 1000,
-  },
   dropdown: {
-    height: 50,
-    backgroundColor: '#F5F7FA',
+    backgroundColor: '#FFFFFF',
     borderColor: '#E4E9F2',
-    borderRadius: 10,
+    marginBottom: 15,
   },
-  dropdownContainer: {
+  dropDownContainer: {
+    backgroundColor: '#FFFFFF',
     borderColor: '#E4E9F2',
-    borderRadius: 10,
-    maxHeight: 200,
   },
   dropdownText: {
     fontSize: 16,
     color: '#2E3A59',
   },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-  },
-  submitButtonContainer: {
-    marginTop: 10,
+  dropdownPlaceholder: {
+    color: '#2E3A59',
+    fontSize: 16,
   }
 });
 

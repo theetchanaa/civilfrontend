@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const API_URL = 'http://192.168.234.233:5000/projects'; // Update with your backend URL
+const API_URL = 'http://192.168.234.250:5000/projects';
 
 const SearchProject = () => {
   const navigation = useNavigation();
@@ -42,14 +42,14 @@ const SearchProject = () => {
   }, [projects]);
 
   const navigateToProjectDetails = (project) => {
-    console.log(`Navigating to ProjectDetails with project:`, project); // Debugging log
-    navigation.navigate('ProjectDetails', { project }); // Pass the full project object
+    console.log(`Navigating to ProjectDetails with project:`, project);
+    navigation.navigate('ProjectDetails', { project });
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0078D4" />
+        <ActivityIndicator size="large" color="#2E3A59" />
       </View>
     );
   }
@@ -63,96 +63,127 @@ const SearchProject = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search Projects..."
-        value={searchQuery}
-        onChangeText={handleSearch}
-      />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : null}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.formContainer}>
+            <Text style={styles.label}>Search Projects</Text>
+            <TextInput
+              style={[styles.input, styles.inputSpacing]}
+              placeholder="Search Projects..."
+              value={searchQuery}
+              onChangeText={handleSearch}
+              placeholderTextColor="#999"
+            />
 
-      <ScrollView style={styles.tabContainer}>
-        {filteredProjects.map((project, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.projectContainer}
-            onPress={() => navigateToProjectDetails(project)} // Pass the selected project object
-          >
-            <View style={styles.tab}>
-              <Text style={styles.tabText}>{project.projectname}</Text>
-            </View>
-            <View style={styles.projectDetails}>
-              <Text style={styles.detailText}>Quoted Amount: ${project.quotedamount}</Text>
-              <Text style={styles.detailText}>Total Expense: ${project.totexpense}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
+            {filteredProjects.map((project, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.projectCard}
+                onPress={() => navigateToProjectDetails(project)}
+              >
+                <Text style={styles.projectName}>{project.projectname}</Text>
+                <View style={styles.projectDetails}>
+                  <Text style={styles.detailText}>Quoted Amount: ${project.quotedamount}</Text>
+                  <Text style={styles.detailText}>Total Expense: ${project.totexpense}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#F5F7FA',
   },
-  searchBar: {
+  scrollViewContainer: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  formContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+    marginBottom: 8,
+  },
+  input: {
     height: 50,
+    backgroundColor: '#F5F7FA',
+    borderColor: '#E4E9F2',
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 10,
     paddingHorizontal: 15,
-    marginBottom: 20,
     fontSize: 16,
-    backgroundColor: '#fff',
+    color: '#2E3A59',
   },
-  tabContainer: {
-    flex: 1,
+  inputSpacing: {
+    marginBottom: 15,
   },
-  projectContainer: {
-    marginBottom: 20,
-    backgroundColor: '#fff',
+  projectCard: {
+    backgroundColor: '#2E3A59',
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 10,
-  },
-  tab: {
     padding: 15,
-    backgroundColor: '#0078D4',
-    borderRadius: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#2E3A59',
+  },
+  projectName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
     marginBottom: 10,
   },
-  tabText: {
-    fontSize: 18,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
   projectDetails: {
-    paddingLeft: 15,
-    paddingRight: 15,
-    paddingBottom: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 10,
+    gap: 5,
   },
   detailText: {
     fontSize: 16,
-    color: '#333',
-    marginBottom: 5,
+    color: '#2E3A59',
+    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F5F7FA',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F5F7FA',
   },
   errorText: {
     fontSize: 18,
-    color: 'red',
+    color: '#FF3B30',
+    fontWeight: '600',
   },
 });
 

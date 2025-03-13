@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-const API_URL = `http://192.168.234.233:5000`; // Update with your backend URL
+const API_URL = `http://192.168.234.250:5000`; // Update with your backend URL
 
 const ProjectDetails = () => {
   const route = useRoute();
@@ -29,14 +29,13 @@ const ProjectDetails = () => {
     return data.filter(item => {
       const identifier = `${item.id || item.name}-${item.date || item.type}`; 
       if (seen.has(identifier)) {
-        return false; // Duplicate found, ignore it
+        return false;
       }
       seen.add(identifier);
-      return true; // Unique entry, keep it
+      return true;
     });
   };
   
-    
   const fetchProjectDetails = async () => {
     try {
       const response = await fetch(`${API_URL}/project-details?projectname=${project.projectname}`);
@@ -58,15 +57,12 @@ const ProjectDetails = () => {
         throw new Error('Failed to fetch employee details');
       }
       const data = await response.json();
-   
-      setEmployeeData(removeDuplicates(data));  // Apply duplicate removal before setting state
+      setEmployeeData(removeDuplicates(data));
     } catch (error) {
       console.error('Error fetching employee details:', error);
       setError(error.message);
     }
   };
-  
-
 
   const fetchCategoryData = async () => {
     try {
@@ -75,9 +71,7 @@ const ProjectDetails = () => {
         throw new Error('Failed to fetch category details');
       }
       const data = await response.json();
-    
-      setCategoryData(removeDuplicates(data)); 
-   
+      setCategoryData(removeDuplicates(data));
     } catch (error) {
       console.error('Error fetching category details:', error);
       setError(error.message);
@@ -85,7 +79,6 @@ const ProjectDetails = () => {
       setLoading(false);
     }
   };
-  
 
   const filteredEmployeeData = employeeData.filter((item) =>
     item.name.toLowerCase().includes(employeeSearch.name.toLowerCase()) &&
@@ -122,102 +115,258 @@ const ProjectDetails = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>{project.projectname}</Text>
-      <View style={styles.detailContainer}>
-        <Text style={styles.detailText}>Deadline: Not specified</Text>
-        <Text style={styles.detailText}>Quoted Amount: ${quotedamount.toFixed(2)}</Text>
-        <Text style={styles.detailText}>Total Expense: ${totexpense.toFixed(2)}</Text>
-        <Text style={styles.detailText}>Balance Amount: ${balanceAmount.toFixed(2)}</Text>
-      </View>
-
-      {/* Employee Details Section */}
-      <Text style={styles.sectionTitle}>Employee Details</Text>
-      <View style={styles.filterContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Search by Name"
-          value={employeeSearch.name}
-          onChangeText={(text) => setEmployeeSearch({ ...employeeSearch, name: text })}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Search by Type"
-          value={employeeSearch.type}
-          onChangeText={(text) => setEmployeeSearch({ ...employeeSearch, type: text })}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Search by Date"
-          value={employeeSearch.date}
-          onChangeText={(text) => setEmployeeSearch({ ...employeeSearch, date: text })}
-        />
-      </View>
-
-      <View style={styles.tableContainer}>
-        <View style={styles.tableHeader}>
-          <Text style={styles.headerText}>Name</Text>
-          <Text style={styles.headerText}>Type</Text>
-          <Text style={styles.headerText}>Date</Text>
-          <Text style={styles.headerText}>Amount</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>{project.projectname}</Text>
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceTitle}>Project Balance</Text>
+          <Text style={styles.balanceAmount}>${balanceAmount.toFixed(2)}</Text>
+          <View style={styles.balanceDetails}>
+            <View style={styles.balanceItem}>
+              <Text style={styles.balanceLabel}>Quoted</Text>
+              <Text style={styles.balanceValue}>${quotedamount.toFixed(2)}</Text>
+            </View>
+            <View style={styles.balanceItem}>
+              <Text style={styles.balanceLabel}>Spent</Text>
+              <Text style={styles.balanceValue}>${totexpense.toFixed(2)}</Text>
+            </View>
+          </View>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Add Employee Expense</Text>
+        <View style={styles.inputGroup}>
+          <TextInput
+            style={styles.input}
+            placeholder="Employee Name"
+            value={employeeSearch.name}
+            onChangeText={(text) => setEmployeeSearch({ ...employeeSearch, name: text })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Work Type"
+            value={employeeSearch.type}
+            onChangeText={(text) => setEmployeeSearch({ ...employeeSearch, type: text })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Date"
+            value={employeeSearch.date}
+            onChangeText={(text) => setEmployeeSearch({ ...employeeSearch, date: text })}
+          />
+          
+        </View>
+
+        <Text style={styles.listTitle}>Recent Employee Expenses</Text>
         {filteredEmployeeData.map((item) => (
-  <View key={item.id || `${item.name}-${item.date}`} style={styles.tableRow}>
-    <Text style={styles.rowText}>{item.name}</Text>
-    <Text style={styles.rowText}>{item.type}</Text>
-    <Text style={styles.rowText}>{item.date}</Text>
-    <Text style={styles.rowText}>${item.amount.toFixed(2)}</Text>
-  </View>
-))}
-
+          <View key={item.id || `${item.name}-${item.date}`} style={styles.expenseCard}>
+            <View style={styles.expenseHeader}>
+              <Text style={styles.expenseName}>{item.name}</Text>
+              <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+            </View>
+            <View style={styles.expenseDetails}>
+              <Text style={styles.expenseType}>{item.type}</Text>
+              <Text style={styles.expenseDate}>{item.date}</Text>
+            </View>
+          </View>
+        ))}
       </View>
 
-      {/* Category Details Section */}
-      <Text style={styles.sectionTitle}>Category Details</Text>
-      <View style={styles.filterContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Search by Type"
-          value={categorySearch.type}
-          onChangeText={(text) => setCategorySearch({ ...categorySearch, type: text })}
-        />
-      </View>
-
-      <View style={styles.tableContainer}>
-        <View style={styles.tableHeader}>
-          <Text style={styles.headerText}>Type</Text>
-          <Text style={styles.headerText}>Estimated Amount</Text>
-          <Text style={styles.headerText}>Expense</Text>
-       
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Add Category Expense</Text>
+        <View style={styles.inputGroup}>
+          <TextInput
+            style={styles.input}
+            placeholder="Category Type"
+            value={categorySearch.type}
+            onChangeText={(text) => setCategorySearch({ ...categorySearch, type: text })}
+          />
+          
         </View>
-        {filteredCategoryData.map((item) => (
-  <View key={item.id || item.type} style={styles.tableRow}>
-    <Text style={styles.rowText}>{item.type}</Text>
-    <Text style={styles.rowText}>${item.estamount.toFixed(2)}</Text>
-    <Text style={styles.rowText}>${item.expense.toFixed(2)}</Text>
-  </View>
-))}
 
+        <Text style={styles.listTitle}>Category Summary</Text>
+        {filteredCategoryData.map((item) => (
+          <View key={item.id || item.type} style={styles.categoryCard}>
+            <Text style={styles.categoryType}>{item.type}</Text>
+            <View style={styles.categoryDetails}>
+              <View style={styles.categoryItem}>
+                <Text style={styles.categoryLabel}>Estimated</Text>
+                <Text style={styles.categoryValue}>${item.estamount.toFixed(2)}</Text>
+              </View>
+              <View style={styles.categoryItem}>
+                <Text style={styles.categoryLabel}>Actual</Text>
+                <Text style={styles.categoryValue}>${item.expense.toFixed(2)}</Text>
+              </View>
+            </View>
+          </View>
+        ))}
       </View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 10, backgroundColor: '#f9f9f9' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
-  detailContainer: { marginBottom: 15, padding: 10, backgroundColor: '#fff', borderRadius: 5 },
-  detailText: { fontSize: 16, marginBottom: 5 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  filterContainer: { marginBottom: 10 },
-  input: { padding: 8, borderWidth: 1, borderColor: '#ddd', borderRadius: 5, marginBottom: 5 },
-  tableContainer: { borderWidth: 1, borderColor: '#ddd', borderRadius: 5, backgroundColor: '#fff' },
-  tableHeader: { flexDirection: 'row', backgroundColor: '#ddd', padding: 10 },
-  headerText: { flex: 1, fontWeight: 'bold', textAlign: 'center' },
-  tableRow: { flexDirection: 'row', padding: 10, borderBottomWidth: 1, borderBottomColor: '#ddd' },
-  rowText: { flex: 1, textAlign: 'center' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorText: { fontSize: 18, color: 'red' },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+  header: {
+    padding: 20,
+    backgroundColor: '#2E3A59',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 20,
+  },
+  balanceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 3,
+  },
+  balanceTitle: {
+    fontSize: 16,
+    color: '#8F9BB3',
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 16,
+  },
+  balanceDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  balanceItem: {
+    alignItems: 'center',
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  balanceValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  section: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 16,
+  },
+  inputGroup: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 20,
+  },
+  input: {
+    backgroundColor: '#F7F9FC',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    fontSize: 16,
+  },
+  addButton: {
+    backgroundColor: '#0078D4',
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  listTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2E3A59',
+    marginBottom: 12,
+  },
+  expenseCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 10,
+  },
+  expenseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  expenseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  expenseAmount: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0078D4',
+  },
+  expenseDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  expenseType: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  expenseDate: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  categoryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 10,
+  },
+  categoryType: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+    marginBottom: 8,
+  },
+  categoryDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  categoryItem: {
+    alignItems: 'center',
+  },
+  categoryLabel: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  categoryValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#FF3D71',
+  },
 });
 
 export default ProjectDetails;

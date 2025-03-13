@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { TextInput, View, Button, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import {
+  TextInput,
+  View,
+  Button,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Text,
+} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 const MachineryFormScreen = () => {
@@ -14,7 +25,7 @@ const MachineryFormScreen = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://10.1.225.144:5000/machinery');
+        const response = await fetch('http://192.168.234.250:5000/machinery');
         const data = await response.json();
         setIndustryOptions(data.machinery);
         setFilteredIndustryOptions(data.machinery);
@@ -42,7 +53,7 @@ const MachineryFormScreen = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const machineryResponse = await fetch('http://10.1.225.144:5000/add-machinery', {
+        const machineryResponse = await fetch('http://192.168.234.250:5000/add-machinery', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -58,7 +69,7 @@ const MachineryFormScreen = () => {
         alert('Success: New machinery type added successfully!');
       }
 
-      const response = await fetch('http://10.1.225.144:5000/add-category', {
+      const response = await fetch('http://192.168.234.250:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,99 +90,135 @@ const MachineryFormScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : null}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollViewContainer}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled={true}
-        >
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Name"
-            value={name}
-            onChangeText={setName}
-          />
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Add Machinery</Text>
+      </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Phone Number"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-          />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        style={styles.formContainer}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollViewContainer}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+          >
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Name"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#2E3A59"
+            />
 
-          <DropDownPicker
-            open={openIndustry}
-            value={industryType}
-            items={[
-              { label: "None", value: null },
-              ...filteredIndustryOptions
-                ?.filter((option) => option)
-                .map((option, index) => ({
-                  label: option,
-                  value: option,
-                  key: index,
-                })),
-            ]}
-            setOpen={setOpenIndustry}
-            setValue={setIndustryType}
-            placeholder="Select machinery Type"
-            searchable={true}
-            searchPlaceholder="Search machinery..."
-            style={styles.dropdown}
-            onChangeSearchText={handleSearchTextChange}
-            listMode="SCROLLVIEW" 
-            zIndex={1000} 
-            zIndexInverse={1000} 
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Phone Number"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              placeholderTextColor="#2E3A59"
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Add a new machinery type"
-            value={newIndustryType}
-            onChangeText={setNewIndustryType}
-            editable={!industryType}
-          />
+            <DropDownPicker
+              open={openIndustry}
+              value={industryType}
+              items={[
+                { label: "None", value: null },
+                ...filteredIndustryOptions
+                  ?.filter((option) => option)
+                  .map((option, index) => ({
+                    label: option,
+                    value: option,
+                    key: index,
+                  })),
+              ]}
+              setOpen={setOpenIndustry}
+              setValue={setIndustryType}
+              placeholder="Select Machinery Type"
+              searchable={true}
+              searchPlaceholder="Search machinery..."
+              style={styles.dropdown}
+              onChangeSearchText={handleSearchTextChange}
+              listMode="SCROLLVIEW"
+              zIndex={1000}
+              zIndexInverse={1000}
+              dropDownContainerStyle={styles.dropDownContainer}
+              textStyle={styles.dropdownText}
+              placeholderStyle={styles.dropdownPlaceholder}
+            />
 
-          <View style={styles.submitButtonContainer}>
-            <Button title="Submit" onPress={handleSubmit} />
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+            <TextInput
+              style={styles.input}
+              placeholder="Add a new machinery type"
+              value={newIndustryType}
+              onChangeText={setNewIndustryType}
+              editable={!industryType}
+              placeholderTextColor="#2E3A59"
+            />
+
+            <Button
+              title="Submit"
+              onPress={handleSubmit}
+              color="#2E3A59"
+            />
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+  header: {
+    backgroundColor: '#2E3A59',
+    padding: 20,
+    paddingTop: 40,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  formContainer: {
+    flex: 1,
+    padding: 20,
   },
   scrollViewContainer: {
-    padding: 20,
-    paddingBottom: 50,
+    flexGrow: 1,
   },
   input: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 15,
     marginBottom: 15,
-    paddingLeft: 10,
-    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    fontSize: 16,
+    color: '#2E3A59',
   },
   dropdown: {
-    height: 50,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4E9F2',
     marginBottom: 15,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
   },
-  submitButtonContainer: {
-    marginBottom: 50,
+  dropDownContainer: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4E9F2',
   },
+  dropdownText: {
+    fontSize: 16,
+    color: '#2E3A59',
+  },
+  dropdownPlaceholder: {
+    color: '#2E3A59',
+  }
 });
 
 export default MachineryFormScreen;
