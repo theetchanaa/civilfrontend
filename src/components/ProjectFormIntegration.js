@@ -4,6 +4,8 @@ import axios from 'axios';
 const useProjectForm = () => {
   const [projectName, setProjectName] = useState('');
   const [estimatedAmount, setEstimatedAmount] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [duration, setDuration] = useState('');
   const [category, setCategory] = useState('');
   const [type, setType] = useState('');
   const [allocatedAmount, setAllocatedAmount] = useState('');
@@ -12,7 +14,7 @@ const useProjectForm = () => {
 
   useEffect(() => {
     if (category) {
-      axios.get(`http://192.168.234.250:5000/${category}`)
+      axios.get(`http://192.168.150.250:5000/${category}`)
         .then(response => {
           const types = response.data[category] || [];
           const validTypes = types.filter(item => item && item.trim() !== '');
@@ -32,10 +34,12 @@ const useProjectForm = () => {
   }, [category]);
 
   const handleProjectSubmit = () => {
-    if (projectName && estimatedAmount && tableData.length > 0) {
+    if (projectName && estimatedAmount && startDate && duration && tableData.length > 0) {
       const data = {
         projectname: projectName,
         estimated_amount: estimatedAmount,  // Matches fixed backend key
+        start_date: startDate,             // Add start date
+        duration: parseInt(duration, 10),  // Convert duration to integer
         rows: tableData.map((row) => ({
           category: row.category,
           type: row.type,
@@ -44,7 +48,7 @@ const useProjectForm = () => {
         })),
       };
   
-      axios.post('http://192.168.234.250:5000/submit_project', data)
+      axios.post('http://192.168.150.250:5000/submit_project', data)
         .then(response => {
           alert('Project and payments added successfully!');
           setProjectName('');
@@ -84,6 +88,11 @@ const useProjectForm = () => {
     setEstimatedAmount,
     category,
     setCategory,
+    startDate,
+    setStartDate,
+    duration,
+    setDuration,
+    category,
     type,
     setType,
     allocatedAmount,
