@@ -9,6 +9,10 @@ const ProjectFormScreenUI = () => {
     setProjectName, 
     estimatedAmount,
     setEstimatedAmount,
+    startDate,
+    setStartDate,
+    duration,
+    setDuration,
     category,
     setCategory,
     type,
@@ -53,6 +57,26 @@ const ProjectFormScreenUI = () => {
             keyboardType="numeric"
             placeholderTextColor="#999"
           />
+
+          <Text style={styles.label}>Start Date</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter start date (YYYY-MM-DD)"
+            value={startDate}
+            onChangeText={setStartDate}
+            placeholderTextColor="#999"
+          />
+          <Text style={styles.label}>Duration</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter duration"
+            value={duration}
+            onChangeText={setDuration}
+            keyboardType="numeric"
+            placeholderTextColor="#999"
+          />
+
+  
 
           <View style={styles.tableContainer}>
             <View style={styles.header}>
