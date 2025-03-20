@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  FlatList, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Modal, 
-  ActivityIndicator,
-  StatusBar
-} from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Modal, Button, ActivityIndicator } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 const API_URL = "http://192.168.234.233:5000"; // Flask API URL
@@ -158,106 +148,78 @@ const Labor = () => {
   
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#2E3A59" barStyle="light-content" />
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Project Categories</Text>
-      </View>
+      <Text style={styles.header}>Project Categories</Text>
 
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search categories..."
-          placeholderTextColor="#8F9BB3"
-          value={searchQuery}
-          onChangeText={(text) => setSearchQuery(text)}
-        />
-      </View>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search categories..."
+        value={searchQuery}
+        onChangeText={(text) => setSearchQuery(text)}
+      />
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2E3A59" />
-          <Text style={styles.loadingText}>Loading categories...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredCategories}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.card,
-                item.type && item.type.toLowerCase() === "labour" && styles.labourHighlight,
-              ]}
-              onPress={() => handleCategoryPress(item)}
-            >
-              <View style={styles.cardHeader}>
-                <Text style={styles.categoryId}>#{item.id}</Text>
-                <View style={styles.typeBadge}>
-                  <Text style={styles.categoryType}>
-                    {item.type ? item.type.toUpperCase() : ""}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.categoryName}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            !loading && (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyMessage}>No categories found</Text>
-                <Text style={styles.emptySubMessage}>Try a different search term</Text>
-              </View>
-            )
-          }
-        />
-      )}
+      {loading ? <ActivityIndicator size="large" color="blue" /> : null}
+
+      <FlatList
+        data={filteredCategories}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.card,
+              item.type && item.type.toLowerCase() === "labour" && styles.labourHighlight,
+            ]}
+            onPress={() => handleCategoryPress(item)}
+          >
+            <View style={styles.cardHeader}>
+              <Text style={styles.categoryId}>#{item.id}</Text>
+              <Text style={styles.categoryType}>
+                {item.type ? item.type.toUpperCase() : ""}
+              </Text>
+            </View>
+            <Text style={styles.categoryName}>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={
+          !loading && (
+            <Text style={styles.emptyMessage}>No categories found. Try a different search.</Text>
+          )
+        }
+      />
 
       {/* Edit Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Category</Text>
-            </View>
+            <Text style={styles.modalTitle}>Edit Category</Text>
 
             {selectedCategory && (
               <>
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Category ID:</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={selectedCategory.id ? selectedCategory.id.toString() : ""}
-                    onChangeText={(text) =>
-                      setSelectedCategory((prev) => ({ ...prev, id: text }))
-                    }
-                    keyboardType="numeric"
-                    placeholderTextColor="#8F9BB3"
-                  />
-                </View>
+                <Text style={styles.label}>Category ID:</Text>
+                <TextInput
+                  style={styles.input}
+                  value={selectedCategory.id ? selectedCategory.id.toString() : ""}
+                  onChangeText={(text) =>
+                    setSelectedCategory((prev) => ({ ...prev, id: text }))
+                  }
+                  keyboardType="numeric"
+                />
 
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Category Name:</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={selectedCategory.name || ""}
-                    onChangeText={(text) =>
-                      setSelectedCategory((prev) => ({ ...prev, name: text }))
-                    }
-                    placeholderTextColor="#8F9BB3"
-                  />
-                </View>
+                <Text style={styles.label}>Category Name:</Text>
+                <TextInput
+                  style={styles.input}
+                  value={selectedCategory.name || ""}
+                  onChangeText={(text) =>
+                    setSelectedCategory((prev) => ({ ...prev, name: text }))
+                  }
+                />
 
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Category Type:</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Search category types..."
-                    placeholderTextColor="#8F9BB3"
-                    value={pickerSearchQuery}
-                    onChangeText={handlePickerSearch}
-                  />
-                </View>
+                <Text style={styles.label}>Category Type:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Search category types..."
+                  value={pickerSearchQuery}
+                  onChangeText={handlePickerSearch}
+                />
 
                 <View style={styles.pickerContainer}>
                   <Text style={styles.pickerLabel}>
@@ -273,9 +235,8 @@ const Labor = () => {
                         setSelectedCategory((prev) => ({ ...prev, type: value }))
                       }
                       style={styles.picker}
-                      dropdownIconColor="#2E3A59"
                     >
-                      <Picker.Item label="Select a type" value="" color="#8F9BB3" />
+                      <Picker.Item label="Select a type" value="" />
                       {getPickerItems().map((value, index) => (
                         <Picker.Item
                           key={`${value}-${index}`}
@@ -284,16 +245,14 @@ const Labor = () => {
                           color={
                             pickerSearchQuery &&
                             value.toLowerCase().includes(pickerSearchQuery.toLowerCase())
-                              ? "#2E3A59"
-                              : "#4A5568"
+                              ? "#000"
+                              : "#444"
                           }
                         />
                       ))}
                     </Picker>
                   ) : (
-                    <View style={styles.noResultsContainer}>
-                      <Text style={styles.noResults}>No matching types found</Text>
-                    </View>
+                    <Text style={styles.noResults}>No matching types found</Text>
                   )}
                 </View>
 
@@ -327,228 +286,87 @@ const Labor = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#F7F9FC" 
-  },
-  header: { 
-    backgroundColor: "#2E3A59", 
-    paddingVertical: 20, 
-    paddingHorizontal: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  headerText: { 
-    fontSize: 24, 
-    fontWeight: "bold", 
-    color: "#FFF",
-    textAlign: "center"
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "#FFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E4E9F2",
-  },
+  container: { flex: 1, padding: 20, backgroundColor: "#f4f4f8" },
+  header: { fontSize: 28, fontWeight: "bold", marginBottom: 20, textAlign: "center", color: "#333" },
   searchInput: {
     borderWidth: 1,
-    borderColor: "#E4E9F2",
-    backgroundColor: "#F7F9FC",
+    padding: 12,
     borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#2E3A59",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: "#2E3A59",
-    fontSize: 16,
-  },
-  listContainer: {
-    padding: 15,
+    marginBottom: 15,
+    backgroundColor: "#fff",
+    borderColor: "#ddd",
   },
   card: {
-    backgroundColor: "#FFF",
-    padding: 16,
+    backgroundColor: "#fff",
+    padding: 15,
     borderRadius: 10,
-    marginBottom: 12,
-    elevation: 2,
+    marginBottom: 10,
+    elevation: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    borderWidth: 1,
-    borderColor: "#E4E9F2",
+    shadowRadius: 4,
   },
-  cardHeader: { 
-    flexDirection: "row", 
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  categoryId: { 
-    fontSize: 14, 
-    color: "#8F9BB3",
-    fontWeight: "500", 
-  },
-  typeBadge: {
-    backgroundColor: "#EDF1F7",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  categoryType: { 
-    fontSize: 12, 
-    fontWeight: "bold", 
-    color: "#2E3A59" 
-  },
-  categoryName: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    color: "#2E3A59",
-    marginTop: 5,
-  },
-  emptyContainer: {
-    padding: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyMessage: { 
-    textAlign: "center", 
-    color: "#2E3A59", 
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  emptySubMessage: {
-    textAlign: "center",
-    color: "#8F9BB3",
-    fontSize: 14,
-  },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+  categoryId: { fontSize: 14, color: "#888" },
+  categoryType: { fontSize: 14, fontWeight: "bold", color: "#555" },
+  categoryName: { fontSize: 20, fontWeight: "bold", color: "#333" },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(46, 58, 89, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
     width: "90%",
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    overflow: "hidden",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  modalHeader: {
-    backgroundColor: "#2E3A59",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#FFF",
+    marginBottom: 15,
     textAlign: "center",
+    color: "#333",
   },
-  formGroup: {
-    paddingHorizontal: 20,
-    marginTop: 15,
-  },
-  label: { 
-    fontSize: 16, 
-    fontWeight: "600", 
-    marginBottom: 8, 
-    color: "#2E3A59" 
-  },
+  label: { fontSize: 16, fontWeight: "bold", marginBottom: 5, color: "#555" },
   input: {
     borderWidth: 1,
-    borderColor: "#E4E9F2",
+    padding: 10,
     borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: "#F7F9FC",
-    color: "#2E3A59",
-    fontSize: 16,
+    marginBottom: 15,
+    backgroundColor: "#f9f9f9",
+    borderColor: "#ddd",
   },
   pickerContainer: {
-    marginHorizontal: 20,
-    marginTop: 15,
-    backgroundColor: "#F7F9FC",
+    marginBottom: 15,
+    backgroundColor: "#f9f9f9",
     borderRadius: 8,
-    padding: 10,
-    borderColor: "#E4E9F2",
+    padding: 5,
+    borderColor: "#ddd",
     borderWidth: 1,
   },
-  pickerLabel: { 
-    fontSize: 14, 
-    color: "#8F9BB3", 
-    marginBottom: 8, 
-    paddingHorizontal: 5 
-  },
-  picker: { 
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E4E9F2",
-  },
-  noResultsContainer: {
-    padding: 15,
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E4E9F2",
-  },
-  noResults: { 
-    textAlign: "center", 
-    color: "#8F9BB3", 
-    fontSize: 14,
-  },
-  modalButtons: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    padding: 20,
-  },
+  pickerLabel: { fontSize: 14, color: "#666", marginBottom: 5, paddingHorizontal: 5 },
+  picker: { marginBottom: 5 },
+  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 15 },
   button: {
     flex: 1,
-    paddingVertical: 12,
+    padding: 10,
     borderRadius: 8,
     alignItems: "center",
     marginHorizontal: 5,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
   },
-  saveButton: { backgroundColor: "#2E3A59" },
-  deleteButton: { backgroundColor: "#FF3D71" },
-  cancelButton: { backgroundColor: "#8F9BB3" },
-  buttonText: { 
-    color: "#FFF", 
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  labourHighlight: { 
-    borderLeftWidth: 5, 
-    borderLeftColor: "#2E3A59" 
-  },
+  saveButton: { backgroundColor: "#4CAF50" },
+  deleteButton: { backgroundColor: "#F44336" },
+  cancelButton: { backgroundColor: "#9E9E9E" },
+  buttonText: { color: "#fff", fontWeight: "bold" },
+  labourHighlight: { borderLeftWidth: 5, borderLeftColor: "#4a90e2" },
+  noResults: { padding: 10, textAlign: "center", color: "#888", marginBottom: 15 },
+  emptyMessage: { textAlign: "center", color: "#888", marginTop: 20, fontSize: 16 },
 });
-
 export default Labor;

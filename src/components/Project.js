@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const API_URL = 'http://192.168.234.233:5000/projects';
 
-const SearchProject = () => {
+const Project = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [projects, setProjects] = useState([]);
@@ -43,7 +43,7 @@ const SearchProject = () => {
 
   const navigateToProjectDetails = (project) => {
     console.log(`Navigating to ProjectDetails with project:`, project);
-    navigation.navigate('ProjectDetails', { project });
+    navigation.navigate('EditProject', { project });
   };
 
   if (loading) {
@@ -187,4 +187,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SearchProject;
+export default Project;

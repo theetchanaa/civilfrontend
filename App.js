@@ -13,6 +13,11 @@ import projectDetails from './src/components/ProjectDetails';
 import SearchUserScreen from './src/components/SearchUserScreen';
 import UserFinancialDetailScreen from './src/components/UserFinancialDetailScreen';
 import ProjectDetails from './src/components/ProjectDetails';
+import Project from './src/components/Project';
+import Labor from './src/components/Labor';
+import EditScreen from './src/components/EditScreen';
+import EditProject from './src/components/EditProject';
+import EditLabour from './src/components/EditLabour';
 
 const Stack = createStackNavigator();
 
@@ -31,6 +36,11 @@ const App = () => {
         <Stack.Screen name="ProjectDetails" component={ProjectDetails} />
         <Stack.Screen name="SearchUserScreen" component={SearchUserScreen} /> 
         <Stack.Screen name="UserFinancialDetailScreen" component={UserFinancialDetailScreen} />
+        <Stack.Screen name="Project" component={Project} />
+        <Stack.Screen name="Labor" component={Labor} />
+        <Stack.Screen name="EditScreen" component={EditScreen} />
+        <Stack.Screen name="EditProject" component={EditProject} />
+        <Stack.Screen name="EditLabour" component={EditLabour} />
       </Stack.Navigator>
     </NavigationContainer>
   );

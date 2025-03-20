@@ -12,7 +12,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import moment from 'moment';
 
-const API_BASE_URL = 'http://192.168.234.250:5000';
+const API_BASE_URL = 'http://192.168.234.233:5000';
 
 const UserFinancialDetails = () => {
   const { params } = useRoute();

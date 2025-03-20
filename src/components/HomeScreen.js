@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const HomeScreen = ({ navigation }) => {
   return (
@@ -9,10 +10,7 @@ const HomeScreen = ({ navigation }) => {
           style={styles.iconContainer}
           onPress={() => navigation.navigate('CategorySelection')}
         >
-          <Image
-            source={require('../../assets/add-category-icon.png')}
-            style={styles.iconImage}
-          />
+          <Icon name="account-plus" size={48} color="#2E3A59" style={styles.iconImage} />
           <Text style={styles.iconText}>Add User</Text>
         </TouchableOpacity>
 
@@ -20,10 +18,7 @@ const HomeScreen = ({ navigation }) => {
           style={styles.iconContainer}
           onPress={() => navigation.navigate('ProjectFormScreen')}
         >
-          <Image
-            source={require('../../assets/add-project-icon.png')}
-            style={styles.iconImage}
-          />
+          <Icon name="folder-plus" size={48} color="#2E3A59" style={styles.iconImage} />
           <Text style={styles.iconText}>Add Project</Text>
         </TouchableOpacity>
 
@@ -31,10 +26,7 @@ const HomeScreen = ({ navigation }) => {
           style={styles.iconContainer}
           onPress={() => navigation.navigate('AddExpense')}
         >
-          <Image
-            source={require('../../assets/add-project-icon.png')}
-            style={styles.iconImage}
-          />
+          <Icon name="cash-plus" size={48} color="#2E3A59" style={styles.iconImage} />
           <Text style={styles.iconText}>Add Expense</Text>
         </TouchableOpacity>
 
@@ -42,10 +34,7 @@ const HomeScreen = ({ navigation }) => {
           style={styles.iconContainer}
           onPress={() => navigation.navigate('SearchProject')}
         >
-          <Image
-            source={require('../../assets/add-project-icon.png')}
-            style={styles.iconImage}
-          />
+          <Icon name="folder-search" size={48} color="#2E3A59" style={styles.iconImage} />
           <Text style={styles.iconText}>Search Project</Text>
         </TouchableOpacity>
 
@@ -53,11 +42,16 @@ const HomeScreen = ({ navigation }) => {
           style={styles.iconContainer}
           onPress={() => navigation.navigate('SearchUserScreen')}
         >
-          <Image
-            source={require('../../assets/search-user-icon.jpeg')}
-            style={styles.iconImage}
-          />
+          <Icon name="account-search" size={48} color="#2E3A59" style={styles.iconImage} />
           <Text style={styles.iconText}>Search User</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate('EditScreen')}
+        >
+          <Icon name="pencil" size={48} color="#2E3A59" style={styles.iconImage} />
+          <Text style={styles.iconText}>Edit</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -68,18 +62,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',
-  },
-  header: {
-    padding: 20,
-    paddingTop: 40,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E4E9F2',
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#2E3A59',
   },
   gridContainer: {
     flexDirection: 'row',
@@ -106,8 +88,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   iconImage: {
-    width: 48,
-    height: 48,
     marginBottom: 12,
   },
   iconText: {
