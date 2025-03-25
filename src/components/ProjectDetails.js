@@ -1,324 +1,593 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
-  TextInput, 
-  FlatList, 
-  TouchableOpacity, 
   StyleSheet, 
-  Modal, 
-  ActivityIndicator,
-  StatusBar
-} from "react-native";
-import { Picker } from "@react-native-picker/picker";
+  ScrollView, 
+  TextInput, 
+  ActivityIndicator, 
+  TouchableOpacity, 
+  Alert, 
+  Modal 
+} from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker';
 
-const API_URL = "http://192.168.234.233:5000"; // Flask API URL
+const API_URL = "http://192.168.150.250:5000";
 
-const Labor = () => {
-  const [categories, setCategories] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pickerSearchQuery, setPickerSearchQuery] = useState("");
+const ProjectDetails = () => {
+  const route = useRoute();
+  const { project } = route.params;
+  const [projectDetails, setProjectDetails] = useState(null);
+  const [employeeData, setEmployeeData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [options, setOptions] = useState([]); // Store fetched options
-  const [filteredOptions, setFilteredOptions] = useState([]); // Store filtered options
-  const [allPickerItems, setAllPickerItems] = useState([]); // Store all unique picker values
+  const [error, setError] = useState(null);
+  const [editableQuotedAmount, setEditableQuotedAmount] = useState('');
+  const [isEditingQuotedAmount, setIsEditingQuotedAmount] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
+  const [newTypeData, setNewTypeData] = useState({
+    category: '',
+    type: '',
+    allocatedAmount: ''
+  });
+  const [editTypeModalVisible, setEditTypeModalVisible] = useState(false);
+  const [typeToEdit, setTypeToEdit] = useState(null);
+  const [employeeSearch, setEmployeeSearch] = useState({
+    name: '',
+    type: '',
+    date: ''
+  });
+  const [paymentTypeSearch, setPaymentTypeSearch] = useState('');
+
+  // Category types mapping
+  const categoryTypes = {
+    labour: ['Mason', 'Carpenter', 'Painter', 'Electrician', 'Plumber', 'Shuttering', 'Tiles Work', 'RR Mason'],
+    material: ['Cement', 'Bricks', 'M Sand', 'Metal', 'Steel', 'Shuttering Materials', 'Wood', 'Hardwares', 
+               'Paint Shop', 'Tiles', 'Tiles Paste', 'Electrical Materials', 'Plumbing Materials', 'Soling', 'RR Stones'],
+    machinery: ['Excavator', 'Tipper', 'Tractor', 'Dozer', 'Roller', 'Water Tanker', 'Transport']
+  };
 
   useEffect(() => {
-    fetchCategories();
-    fetchOptions();
-  }, []);
-  
-  const fetchOptions = () => {
-    fetch(`${API_URL}/get-options`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.error) {
-          // Filter out any null or empty values
-          const validOptions = data.map(option => {
-            const filteredOption = {};
-            Object.entries(option).forEach(([key, value]) => {
-              if (value && value.toString().trim() !== '') {
-                filteredOption[key] = value;
-              }
-            });
-            return filteredOption;
-          }).filter(option => Object.keys(option).length > 0);
-          
-          setOptions(validOptions);
-          setFilteredOptions(validOptions);
-          
-          // Extract all unique values for the picker
-          const uniqueValues = new Set();
-          validOptions.forEach(option => {
-            Object.values(option).forEach(value => {
-              if (value && value.toString().trim() !== '') {
-                uniqueValues.add(value.toString());
-              }
-            });
-          });
-          setAllPickerItems(Array.from(uniqueValues).sort());
-        } else {
-          console.error("Options fetch error:", data.error);
-        }
-      })
-      .catch((err) => console.error("Fetch error:", err));
-  };
+    if (project) {
+      fetchProjectDetails();
+      fetchEmployeeData();
+      fetchCategoryData();
+    }
+  }, [project]);
 
-  const fetchCategories = () => {
-    setLoading(true);
-    fetch(`${API_URL}/get_category`)
-      .then((res) => res.json())
-      .then((data) => {
-        const validData = data.filter((cat) => cat.name && cat.name.trim() !== ""); // Remove categories with null/empty names
-        const sortedData = validData.sort((a, b) => a.name.localeCompare(b.name));
-        setCategories(sortedData);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Fetch error:", err);
-        setLoading(false);
-      });
-  };
+  // Filter employee data based on search criteria
+  const filteredEmployeeData = employeeData.filter(employee => {
+    const nameMatch = employee.name.toLowerCase().includes(employeeSearch.name.toLowerCase());
+    const typeMatch = employee.type.toLowerCase().includes(employeeSearch.type.toLowerCase());
+    const dateMatch = employee.date.includes(employeeSearch.date);
+    
+    return nameMatch && typeMatch && dateMatch;
+  });
   
-  const filteredCategories = categories.filter((category) =>
-    category.name && category.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter payment types based on search
+  const filteredCategoryData = categoryData.filter(category => 
+    category.type.toLowerCase().includes(paymentTypeSearch.toLowerCase())
   );
 
-  const handleCategoryPress = (category) => {
-    setSelectedCategory({ ...category, old_id: category.id }); // Store old_id
-    setModalVisible(true);
-    setPickerSearchQuery(""); // Reset picker search when opening modal
+  // Calculate sum of filtered employee expenses
+  const filteredEmployeeSum = filteredEmployeeData.reduce(
+    (sum, employee) => sum + employee.amount, 
+    0
+  );
+
+  // Calculate sum of filtered payment type expenses
+  const filteredPaymentTypeSum = filteredCategoryData.reduce(
+    (sum, category) => sum + category.expense, 
+    0
+  );
+
+  const fetchProjectDetails = async () => {
+    try {
+      const response = await fetch(`${API_URL}/project-details?projectname=${project.projectname}`);
+      if (!response.ok) throw new Error('Failed to fetch project details');
+      const data = await response.json();
+      setProjectDetails(data);
+      setEditableQuotedAmount(data.quotedamount.toString());
+    } catch (error) {
+      console.error('Error fetching project details:', error);
+      setError(error.message);
+    }
   };
-  
-  const handleSave = () => {
-    if (!selectedCategory) return;
-  
-    fetch(`${API_URL}/update-category`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        old_id: selectedCategory.old_id || selectedCategory.id, // Ensure old_id exists
-        id: selectedCategory.id,
-        name: selectedCategory.name,
-        type: selectedCategory.type,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.message) {
-          alert("Category updated successfully!");
-          fetchCategories(); // Refresh categories
-          setModalVisible(false);
-        } else {
-          alert("Update failed! " + (data.error || ""));
+
+  const fetchEmployeeData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/get-expenses-for-deletion?projectname=${project.projectname}`);
+      if (!response.ok) throw new Error('Failed to fetch employee details');
+      const data = await response.json();
+      setEmployeeData(data);
+    } catch (error) {
+      console.error('Error fetching employee details:', error);
+      setError(error.message);
+    }
+  };
+
+  const fetchCategoryData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/category-details?projectname=${project.projectname}`);
+      if (!response.ok) throw new Error('Failed to fetch category details');
+      const data = await response.json();
+      
+      // Remove duplicates by creating a map of unique types
+      const uniqueTypes = {};
+      data.forEach(item => {
+        if (!uniqueTypes[item.type]) {
+          uniqueTypes[item.type] = item;
         }
-      })
-      .catch((err) => console.error("Update error:", err));
+      });
+      
+      setCategoryData(Object.values(uniqueTypes));
+    } catch (error) {
+      console.error('Error fetching category details:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateQuotedAmount = async () => {
+    try {
+      const response = await fetch(`${API_URL}/update-project`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname,
+          quotedamount: parseInt(editableQuotedAmount),
+          totexpense: projectDetails.totexpense
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update project');
+      
+      const data = await response.json();
+      setProjectDetails({...projectDetails, quotedamount: parseInt(editableQuotedAmount)});
+      setIsEditingQuotedAmount(false);
+      Alert.alert("Success", "Quoted amount updated successfully!");
+    } catch (error) {
+      console.error('Error updating quoted amount:', error);
+      Alert.alert("Error", "Failed to update quoted amount");
+    }
+  };
+
+  const confirmDeleteExpense = (expense) => {
+    console.log("Expense to delete:", {
+      id: expense.id,
+      date: expense.date,
+      amount: expense.amount,
+      type: expense.type,
+      projectname: project.projectname
+    });
+    
+    setExpenseToDelete(expense);
+    setDeleteModalVisible(true);
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!expenseToDelete) return;
+  
+    try {
+      const response = await fetch(`${API_URL}/delete-expense`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: expenseToDelete.uid,
+          projectname: expenseToDelete.projectname,
+          id: expenseToDelete.id,
+          date: expenseToDelete.date
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete expense');
+      }
+  
+      // Update local state
+      setEmployeeData(prev => prev.filter(e => e.uid !== expenseToDelete.uid));
+      
+      // Update project totals
+      setProjectDetails(prev => ({
+        ...prev,
+        totexpense: prev.totexpense - expenseToDelete.amount
+      }));
+      
+      setDeleteModalVisible(false);
+      Alert.alert("Success", "Expense deleted successfully!");
+    } catch (error) {
+      console.error('Delete Error:', error);
+      Alert.alert("Error", error.message);
+    }
   };
   
-  const handleDelete = (categoryId) => {
-    fetch(`${API_URL}/delete-category/${categoryId}`, {
-      method: "DELETE",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        alert(data.message);
-        setCategories((prev) => prev.filter((cat) => cat.id !== categoryId)); // Remove from UI
-        setModalVisible(false);
-      })
-      .catch((err) => console.error("Delete error:", err));
-  };
+  const handleAddNewType = async () => {
+    if (!newTypeData.category || !newTypeData.type || !newTypeData.allocatedAmount) {
+      Alert.alert("Error", "Please fill all fields");
+      return;
+    }
 
-  const handlePickerSearch = (text) => {
-    setPickerSearchQuery(text);
-    
-    // Always show all options while typing, but highlight/filter based on search
-    if (text.trim() === "") {
-      // Show all options when search is empty
-      setFilteredOptions(options);
-    } else {
-      // When searching, still keep all options in the state
-      setFilteredOptions(options);
+    try {
+      const response = await fetch(`${API_URL}/add-payment-type`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname,
+          type: newTypeData.type,
+          estamount: parseInt(newTypeData.allocatedAmount),
+          expense: 0
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to add new type');
+      
+      const newType = {
+        type: newTypeData.type,
+        estamount: parseInt(newTypeData.allocatedAmount),
+        expense: 0
+      };
+      
+      setCategoryData([...categoryData, newType]);
+      setNewTypeData({ category: '', type: '', allocatedAmount: '' });
+      Alert.alert("Success", "New payment type added successfully!");
+    } catch (error) {
+      console.error('Error adding new type:', error);
+      Alert.alert("Error", "Failed to add new payment type");
     }
   };
 
-  // Get filtered picker items based on search query
-  const getPickerItems = () => {
-    if (pickerSearchQuery.trim() === "") {
-      return allPickerItems;
+  const handleEditType = async () => {
+    if (!typeToEdit || !typeToEdit.estamount) {
+      Alert.alert("Error", "Please enter a valid amount");
+      return;
     }
-    
-    // Filter items that match the search query
-    return allPickerItems.filter(item => 
-      item.toLowerCase().includes(pickerSearchQuery.toLowerCase())
+
+    try {
+      const response = await fetch(`${API_URL}/update-payment-type`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname,
+          type: typeToEdit.type,
+          estamount: parseInt(typeToEdit.estamount)
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update type');
+      
+      const updatedCategoryData = categoryData.map(item => {
+        if (item.type === typeToEdit.type) {
+          return {...item, estamount: parseInt(typeToEdit.estamount)};
+        }
+        return item;
+      });
+      
+      setCategoryData(updatedCategoryData);
+      setEditTypeModalVisible(false);
+      Alert.alert("Success", "Payment type updated successfully!");
+    } catch (error) {
+      console.error('Error updating type:', error);
+      Alert.alert("Error", "Failed to update payment type");
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0078D4" />
+      </View>
     );
-  };
-  
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+      </View>
+    );
+  }
+
+  if (!projectDetails) {
+    return <Text>No project data available</Text>;
+  }
+
+  const { quotedamount, totexpense } = projectDetails;
+  const balanceAmount = quotedamount - totexpense;
+
   return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor="#2E3A59" barStyle="light-content" />
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Project Categories</Text>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search categories..."
-          placeholderTextColor="#8F9BB3"
-          value={searchQuery}
-          onChangeText={(text) => setSearchQuery(text)}
-        />
-      </View>
-
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2E3A59" />
-          <Text style={styles.loadingText}>Loading categories...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredCategories}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.card,
-                item.type && item.type.toLowerCase() === "labour" && styles.labourHighlight,
-              ]}
-              onPress={() => handleCategoryPress(item)}
-            >
-              <View style={styles.cardHeader}>
-                <Text style={styles.categoryId}>#{item.id}</Text>
-                <View style={styles.typeBadge}>
-                  <Text style={styles.categoryType}>
-                    {item.type ? item.type.toUpperCase() : ""}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.categoryName}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            !loading && (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyMessage}>No categories found</Text>
-                <Text style={styles.emptySubMessage}>Try a different search term</Text>
-              </View>
-            )
-          }
-        />
-      )}
-
-      {/* Edit Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Category</Text>
-            </View>
-
-            {selectedCategory && (
-              <>
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Category ID:</Text>
+    <View style={styles.mainContainer}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{project.projectname}</Text>
+          
+          <View style={styles.balanceCard}>
+            <Text style={styles.balanceTitle}>Project Balance</Text>
+            <Text style={styles.balanceAmount}>${balanceAmount.toFixed(2)}</Text>
+            
+            <View style={styles.balanceDetails}>
+              <View style={styles.balanceItem}>
+                <Text style={styles.balanceLabel}>Quoted</Text>
+                {isEditingQuotedAmount ? (
                   <TextInput
-                    style={styles.input}
-                    value={selectedCategory.id ? selectedCategory.id.toString() : ""}
-                    onChangeText={(text) =>
-                      setSelectedCategory((prev) => ({ ...prev, id: text }))
-                    }
+                    style={styles.amountInput}
+                    value={editableQuotedAmount}
+                    onChangeText={setEditableQuotedAmount}
                     keyboardType="numeric"
-                    placeholderTextColor="#8F9BB3"
+                    autoFocus
                   />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Category Name:</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={selectedCategory.name || ""}
-                    onChangeText={(text) =>
-                      setSelectedCategory((prev) => ({ ...prev, name: text }))
-                    }
-                    placeholderTextColor="#8F9BB3"
-                  />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Category Type:</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Search category types..."
-                    placeholderTextColor="#8F9BB3"
-                    value={pickerSearchQuery}
-                    onChangeText={handlePickerSearch}
-                  />
-                </View>
-
-                <View style={styles.pickerContainer}>
-                  <Text style={styles.pickerLabel}>
-                    {pickerSearchQuery
-                      ? `Showing results for "${pickerSearchQuery}"`
-                      : "All category types"}
-                  </Text>
-
-                  {getPickerItems().length > 0 ? (
-                    <Picker
-                      selectedValue={selectedCategory.type || ""}
-                      onValueChange={(value) =>
-                        setSelectedCategory((prev) => ({ ...prev, type: value }))
-                      }
-                      style={styles.picker}
-                      dropdownIconColor="#2E3A59"
-                    >
-                      <Picker.Item label="Select a type" value="" color="#8F9BB3" />
-                      {getPickerItems().map((value, index) => (
-                        <Picker.Item
-                          key={`${value}-${index}`}
-                          label={value}
-                          value={value}
-                          color={
-                            pickerSearchQuery &&
-                            value.toLowerCase().includes(pickerSearchQuery.toLowerCase())
-                              ? "#2E3A59"
-                              : "#4A5568"
-                          }
-                        />
-                      ))}
-                    </Picker>
-                  ) : (
-                    <View style={styles.noResultsContainer}>
-                      <Text style={styles.noResults}>No matching types found</Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={[styles.button, styles.saveButton]}
-                    onPress={handleSave}
-                  >
-                    <Text style={styles.buttonText}>Save</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.button, styles.deleteButton]}
-                    onPress={() => handleDelete(selectedCategory.id)}
-                  >
-                    <Text style={styles.buttonText}>Delete</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.button, styles.cancelButton]}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
+                ) : (
+                  <Text style={styles.balanceValue}>${quotedamount.toFixed(2)}</Text>
+                )}
+              </View>
+              
+              <View style={styles.balanceItem}>
+                <Text style={styles.balanceLabel}>Spent</Text>
+                <Text style={styles.balanceValue}>${totexpense.toFixed(2)}</Text>
+              </View>
+            </View>
+            
+            {isEditingQuotedAmount ? (
+              <View style={styles.editButtons}>
+                <TouchableOpacity 
+                  style={[styles.editButton, styles.saveButton]}
+                  onPress={handleUpdateQuotedAmount}
+                >
+                  <Text style={styles.buttonText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.editButton, styles.cancelButton]}
+                  onPress={() => {
+                    setIsEditingQuotedAmount(false);
+                    setEditableQuotedAmount(quotedamount.toString());
+                  }}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.editButton}
+                onPress={() => setIsEditingQuotedAmount(true)}
+              >
+                <Text style={styles.buttonText}>Edit Quoted Amount</Text>
+              </TouchableOpacity>
             )}
+          </View>
+        </View>
+
+        {/* Employee Expenses Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Employee Expenses</Text>
+          
+          {/* Employee Expenses Search */}
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by name..."
+              value={employeeSearch.name}
+              onChangeText={(text) => setEmployeeSearch({...employeeSearch, name: text})}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by type..."
+              value={employeeSearch.type}
+              onChangeText={(text) => setEmployeeSearch({...employeeSearch, type: text})}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by date (YYYY-MM-DD)..."
+              value={employeeSearch.date}
+              onChangeText={(text) => setEmployeeSearch({...employeeSearch, date: text})}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          {/* Filtered employee list */}
+          {filteredEmployeeData.map((item) => (
+            <View key={item.uid} style={styles.expenseCard}>
+              <View style={styles.expenseHeader}>
+                <Text style={styles.expenseName}>{item.name}</Text>
+                <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+              </View>
+              <View style={styles.expenseDetails}>
+                <Text style={styles.expenseType}>{item.type}</Text>
+                <Text style={styles.expenseDate}>{item.date}</Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.deleteButton}
+                onPress={() => confirmDeleteExpense(item)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {/* Sum of filtered employee expenses */}
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryText}>
+              Total Filtered Expenses: ${filteredEmployeeSum.toFixed(2)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Payment Types Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Payment Types</Text>
+          
+          {/* Payment Types Search */}
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search payment types..."
+              value={paymentTypeSearch}
+              onChangeText={setPaymentTypeSearch}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          {/* Filtered payment types list */}
+          {filteredCategoryData.map((item) => (
+            <View key={item.type} style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <Text style={styles.categoryType}>{item.type}</Text>
+                <TouchableOpacity 
+                  style={styles.editTypeButton}
+                  onPress={() => {
+                    setTypeToEdit(item);
+                    setEditTypeModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.editTypeButtonText}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.categoryDetails}>
+                <View style={styles.categoryItem}>
+                  <Text style={styles.categoryLabel}>Estimated</Text>
+                  <Text style={styles.categoryValue}>${item.estamount.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryItem}>
+                  <Text style={styles.categoryLabel}>Actual</Text>
+                  <Text style={styles.categoryValue}>${item.expense.toFixed(2)}</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+
+          {/* Sum of filtered payment type expenses */}
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryText}>
+              Total Filtered Expenses: ${filteredPaymentTypeSum.toFixed(2)}
+            </Text>
+          </View>
+
+          {/* Add New Payment Type Form */}
+          <View style={styles.addTypeForm}>
+            <Text style={styles.formTitle}>Add New Payment Type</Text>
+            
+            <Text style={styles.label}>Category</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={newTypeData.category}
+                style={styles.picker}
+                onValueChange={(itemValue) => setNewTypeData({...newTypeData, category: itemValue, type: ''})}
+              >
+                <Picker.Item label="Select Category" value="" />
+                <Picker.Item label="Labour" value="labour" />
+                <Picker.Item label="Material" value="material" />
+                <Picker.Item label="Machinery" value="machinery" />
+              </Picker>
+            </View>
+            
+            <Text style={styles.label}>Type</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={newTypeData.type}
+                style={styles.picker}
+                onValueChange={(itemValue) => setNewTypeData({...newTypeData, type: itemValue})}
+                enabled={newTypeData.category !== ''}
+              >
+                <Picker.Item label="Select Type" value="" />
+                {newTypeData.category && categoryTypes[newTypeData.category]?.map((type, index) => (
+                  <Picker.Item key={index} label={type} value={type} />
+                ))}
+              </Picker>
+            </View>
+            
+            <Text style={styles.label}>Amount Allocated</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter allocated amount"
+              value={newTypeData.allocatedAmount}
+              onChangeText={(text) => setNewTypeData({...newTypeData, allocatedAmount: text})}
+              keyboardType="numeric"
+            />
+            
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={handleAddNewType}
+            >
+              <Text style={styles.buttonText}>Add Payment Type</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={deleteModalVisible}
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Confirm Delete</Text>
+              <Text style={styles.modalText}>
+                Are you sure you want to delete this expense of ${expenseToDelete?.amount.toFixed(2)}?
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelModalButton]}
+                  onPress={() => setDeleteModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.deleteModalButton]}
+                  onPress={handleDeleteExpense}
+                >
+                  <Text style={styles.modalButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Type Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={editTypeModalVisible}
+        onRequestClose={() => setEditTypeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Edit Payment Type</Text>
+              <Text style={styles.modalText}>{typeToEdit?.type}</Text>
+              
+              <Text style={styles.label}>Estimated Amount</Text>
+              <TextInput
+                style={styles.input}
+                value={typeToEdit?.estamount?.toString()}
+                onChangeText={(text) => setTypeToEdit({...typeToEdit, estamount: text})}
+                keyboardType="numeric"
+              />
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelModalButton]}
+                  onPress={() => setEditTypeModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.saveModalButton]}
+                  onPress={handleEditType}
+                >
+                  <Text style={styles.modalButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       </Modal>
@@ -327,228 +596,326 @@ const Labor = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#F7F9FC" 
-  },
-  header: { 
-    backgroundColor: "#2E3A59", 
-    paddingVertical: 20, 
-    paddingHorizontal: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  headerText: { 
-    fontSize: 24, 
-    fontWeight: "bold", 
-    color: "#FFF",
-    textAlign: "center"
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "#FFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E4E9F2",
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: "#E4E9F2",
-    backgroundColor: "#F7F9FC",
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#2E3A59",
-  },
-  loadingContainer: {
+  mainContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#F5F7FA',
+  },
+  container: {
+    flex: 1,
+  },
+  header: {
+    padding: 20,
+    backgroundColor: '#2E3A59',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 20,
+  },
+  balanceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 3,
+  },
+  balanceTitle: {
+    fontSize: 16,
+    color: '#8F9BB3',
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 16,
+  },
+  balanceDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  balanceItem: {
+    alignItems: 'center',
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  balanceValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  amountInput: {
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    borderRadius: 5,
+    padding: 8,
+    fontSize: 16,
+    width: 100,
+    textAlign: 'center',
+  },
+  editButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  editButton: {
+    backgroundColor: '#0078D4',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelButton: {
+    backgroundColor: '#F44336',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  section: {
     padding: 20,
   },
-  loadingText: {
-    marginTop: 10,
-    color: "#2E3A59",
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 16,
   },
-  listContainer: {
+  expenseCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: 15,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0078D4',
   },
-  card: {
-    backgroundColor: "#FFF",
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    borderWidth: 1,
-    borderColor: "#E4E9F2",
-  },
-  cardHeader: { 
-    flexDirection: "row", 
-    justifyContent: "space-between",
-    alignItems: "center",
+  expenseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
-  categoryId: { 
-    fontSize: 14, 
-    color: "#8F9BB3",
-    fontWeight: "500", 
+  expenseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
   },
-  typeBadge: {
-    backgroundColor: "#EDF1F7",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
+  expenseAmount: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0078D4',
   },
-  categoryType: { 
-    fontSize: 12, 
-    fontWeight: "bold", 
-    color: "#2E3A59" 
+  expenseDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  categoryName: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    color: "#2E3A59",
-    marginTop: 5,
+  expenseType: {
+    fontSize: 14,
+    color: '#8F9BB3',
   },
-  emptyContainer: {
-    padding: 30,
-    alignItems: "center",
-    justifyContent: "center",
+  expenseDate: {
+    fontSize: 14,
+    color: '#8F9BB3',
   },
-  emptyMessage: { 
-    textAlign: "center", 
-    color: "#2E3A59", 
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
+  deleteButton: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    padding: 5,
   },
-  emptySubMessage: {
-    textAlign: "center",
-    color: "#8F9BB3",
+  deleteButtonText: {
+    color: '#F44336',
     fontSize: 14,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(46, 58, 89, 0.5)",
-  },
-  modalContent: {
-    width: "90%",
-    backgroundColor: "#FFF",
+  categoryCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
+    padding: 15,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
   },
-  modalHeader: {
-    backgroundColor: "#2E3A59",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFF",
-    textAlign: "center",
+  categoryType: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
   },
-  formGroup: {
-    paddingHorizontal: 20,
-    marginTop: 15,
+  editTypeButton: {
+    padding: 5,
   },
-  label: { 
-    fontSize: 16, 
-    fontWeight: "600", 
-    marginBottom: 8, 
-    color: "#2E3A59" 
+  editTypeButtonText: {
+    color: '#0078D4',
+    fontSize: 14,
+  },
+  categoryDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  categoryItem: {
+    alignItems: 'center',
+  },
+  categoryLabel: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  categoryValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  addTypeForm: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginTop: 20,
+  },
+  formTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 14,
+    color: '#8F9BB3',
+    marginBottom: 5,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    borderRadius: 8,
+    marginBottom: 15,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E4E9F2",
+    borderColor: '#E4E9F2',
     borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: "#F7F9FC",
-    color: "#2E3A59",
+    padding: 12,
+    marginBottom: 15,
     fontSize: 16,
   },
-  pickerContainer: {
-    marginHorizontal: 20,
-    marginTop: 15,
-    backgroundColor: "#F7F9FC",
+  addButton: {
+    backgroundColor: '#2E3A59',
     borderRadius: 8,
-    padding: 10,
-    borderColor: "#E4E9F2",
-    borderWidth: 1,
-  },
-  pickerLabel: { 
-    fontSize: 14, 
-    color: "#8F9BB3", 
-    marginBottom: 8, 
-    paddingHorizontal: 5 
-  },
-  picker: { 
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E4E9F2",
-  },
-  noResultsContainer: {
     padding: 15,
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E4E9F2",
+    alignItems: 'center',
+    marginTop: 10,
   },
-  noResults: { 
-    textAlign: "center", 
-    color: "#8F9BB3", 
-    fontSize: 14,
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  modalButtons: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
+  modalContainer: {
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: 20,
   },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginHorizontal: 5,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 15,
+    textAlign: 'center',
   },
-  saveButton: { backgroundColor: "#2E3A59" },
-  deleteButton: { backgroundColor: "#FF3D71" },
-  cancelButton: { backgroundColor: "#8F9BB3" },
-  buttonText: { 
-    color: "#FFF", 
-    fontWeight: "bold",
+  modalText: {
     fontSize: 16,
+    color: '#2E3A59',
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  labourHighlight: { 
-    borderLeftWidth: 5, 
-    borderLeftColor: "#2E3A59" 
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
+  modalButton: {
+    borderRadius: 8,
+    padding: 12,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  deleteModalButton: {
+    backgroundColor: '#FF3D71',
+  },
+  saveModalButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelModalButton: {
+    backgroundColor: '#8F9BB3',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#FF3D71',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 10,
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: '30%',
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    margin: 5,
+    backgroundColor: '#F5F7FA',
+  },
+  summaryContainer: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 10,
+    alignItems: 'flex-end'
+  },
+  summaryText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2E3A59'
+  }
 });
 
-export default Labor;
+export default ProjectDetails;

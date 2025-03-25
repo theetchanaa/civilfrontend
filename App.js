@@ -9,10 +9,9 @@ import MachineryFormScreen from './src/components/MachineryFormScreen';
 import ProjectFormScreen from './src/components/ProjectFormScreen'; // Import the screen
 import AddExpenseScreen from './src/components/AddExpenseScreen';
 import SearchProject from './src/components/SearchProject';
-import projectDetails from './src/components/ProjectDetails';
+import ProjectDetails from './src/components/ProjectDetails'; 
 import SearchUserScreen from './src/components/SearchUserScreen';
 import UserFinancialDetailScreen from './src/components/UserFinancialDetailScreen';
-import ProjectDetails from './src/components/ProjectDetails';
 import Project from './src/components/Project';
 import Labor from './src/components/Labor';
 import EditScreen from './src/components/EditScreen';

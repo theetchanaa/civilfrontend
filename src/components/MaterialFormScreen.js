@@ -25,7 +25,7 @@ const MaterialFormScreen = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://192.168.234.233:5000/material');
+        const response = await fetch('http://192.168.150.250:5000/material');
         const data = await response.json();
         console.log(data);
         setIndustryOptions(data.material);
@@ -56,7 +56,7 @@ const MaterialFormScreen = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const labourResponse = await fetch('http://192.168.234.233:5000/add-material', {
+        const labourResponse = await fetch('http://192.168.150.250:5000/add-material', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ const MaterialFormScreen = () => {
         }
       }
 
-      const response = await fetch('http://192.168.234.233:5000/add-category', {
+      const response = await fetch('http://192.168.150.250:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -204,28 +204,26 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   input: {
-    height: 50,
-    borderColor: '#2E3A59',
-    borderWidth: 1,
-    marginBottom: 15,
-    paddingLeft: 10,
-    borderRadius: 5,
     backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    fontSize: 16,
     color: '#2E3A59',
   },
   dropdown: {
-    height: 50,
-    marginBottom: 15,
-    borderColor: '#2E3A59',
-    borderWidth: 1,
-    borderRadius: 5,
     backgroundColor: '#FFFFFF',
+    borderColor: '#E4E9F2',
+    marginBottom: 15,
   },
   dropDownContainer: {
-    borderColor: '#2E3A59',
     backgroundColor: '#FFFFFF',
+    borderColor: '#E4E9F2',
   },
   dropdownText: {
+    fontSize: 16,
     color: '#2E3A59',
   },
   dropdownPlaceholder: {

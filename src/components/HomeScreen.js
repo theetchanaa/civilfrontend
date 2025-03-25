@@ -48,10 +48,10 @@ const HomeScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.iconContainer}
-          onPress={() => navigation.navigate('EditScreen')}
+          onPress={() => navigation.navigate('Labor')}
         >
           <Icon name="pencil" size={48} color="#2E3A59" style={styles.iconImage} />
-          <Text style={styles.iconText}>Edit</Text>
+          <Text style={styles.iconText}>Edit User</Text>
         </TouchableOpacity>
       </View>
     </View>

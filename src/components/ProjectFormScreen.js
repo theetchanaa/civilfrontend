@@ -37,7 +37,7 @@ const ProjectFormScreenUI = () => {
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Project Form</Text>
+          <Text style={styles.title}>Add Project</Text>
 
           <Text style={styles.label}>Project Name</Text>
           <TextInput

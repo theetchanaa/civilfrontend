@@ -1,211 +1,921 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Button, TextInput, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TextInput, 
+  ActivityIndicator, 
+  TouchableOpacity, 
+  Alert, 
+  Modal 
+} from 'react-native';
+import { useRoute } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
-const API_URL = `http://192.168.234.233:5000`;
+const API_URL = "http://192.168.150.250:5000";
 
-const EditProject = ({ route }) => {
-    const { project } = route.params;
-    const [projectDetails, setProjectDetails] = useState(null);
-    const [employeeDetails, setEmployeeDetails] = useState([]);
-    const [categoryDetails, setCategoryDetails] = useState([]);
-    const [newEntry, setNewEntry] = useState({ type: "", name: "", cost: 0 });
+const EditProject = () => {
+  const route = useRoute();
+  const { project } = route.params;
+  const [projectDetails, setProjectDetails] = useState(null);
+  const [employeeData, setEmployeeData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editableQuotedAmount, setEditableQuotedAmount] = useState('');
+  const [isEditingQuotedAmount, setIsEditingQuotedAmount] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
+  const [newTypeData, setNewTypeData] = useState({
+    category: '',
+    type: '',
+    allocatedAmount: ''
+  });
+  const [editTypeModalVisible, setEditTypeModalVisible] = useState(false);
+  const [typeToEdit, setTypeToEdit] = useState(null);
+  const [employeeSearch, setEmployeeSearch] = useState({
+    name: '',
+    type: '',
+    date: ''
+  });
+  const [paymentTypeSearch, setPaymentTypeSearch] = useState('');
 
-    const [editableProject, setEditableProject] = useState({
-        quotedamount: project.quotedamount,
-        totexpense: project.totexpense,
-    });
+  // Category types mapping
+  const categoryTypes = {
+    labour: ['Mason', 'Carpenter', 'Painter', 'Electrician', 'Plumber', 'Shuttering', 'Tiles Work', 'RR Mason'],
+    material: ['Cement', 'Bricks', 'M Sand', 'Metal', 'Steel', 'Shuttering Materials', 'Wood', 'Hardwares', 
+               'Paint Shop', 'Tiles', 'Tiles Paste', 'Electrical Materials', 'Plumbing Materials', 'Soling', 'RR Stones'],
+    machinery: ['Excavator', 'Tipper', 'Tractor', 'Dozer', 'Roller', 'Water Tanker', 'Transport']
+  };
 
-    useEffect(() => {
-        fetch(`${API_URL}/project-details?projectname=${project.projectname}`)
-            .then((res) => res.json())
-            .then((data) => setProjectDetails(data))
-            .catch((err) => console.error(err));
+  useEffect(() => {
+    if (project) {
+      fetchProjectDetails();
+      fetchEmployeeData();
+      fetchCategoryData();
+    }
+  }, [project]);
 
-        fetch(`${API_URL}/employee-details?projectname=${project.projectname}`)
-            .then((res) => res.json())
-            .then((data) => setEmployeeDetails(data))
-            .catch((err) => console.error(err));
+  // Filter employee data based on search criteria
+  const filteredEmployeeData = employeeData.filter(employee => {
+    const nameMatch = employee.name.toLowerCase().includes(employeeSearch.name.toLowerCase());
+    const typeMatch = employee.type.toLowerCase().includes(employeeSearch.type.toLowerCase());
+    const dateMatch = employee.date.includes(employeeSearch.date);
+    
+    return nameMatch && typeMatch && dateMatch;
+  });
+  
+  // Filter payment types based on search
+  const filteredCategoryData = categoryData.filter(category => 
+    category.type.toLowerCase().includes(paymentTypeSearch.toLowerCase())
+  );
 
-        fetch(`${API_URL}/category-details?projectname=${project.projectname}`)
-            .then((res) => res.json())
-            .then((data) => setCategoryDetails(data))
-            .catch((err) => console.error(err));
-    }, [project.projectname]);
+  // Calculate sum of filtered employee expenses
+  const filteredEmployeeSum = filteredEmployeeData.reduce(
+    (sum, employee) => sum + employee.amount, 
+    0
+  );
 
-    const handleSaveProjectDetails = () => {
-        fetch(`${API_URL}/update-project`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                projectname: project.projectname,
-                quotedamount: editableProject.quotedamount,
-                totexpense: editableProject.totexpense,
-            }),
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                alert("Project details updated successfully!");
-            })
-            .catch((err) => console.error(err));
-    };
+  // Calculate sum of filtered payment type expenses
+  const filteredPaymentTypeSum = filteredCategoryData.reduce(
+    (sum, category) => sum + category.expense, 
+    0
+  );
 
-    const handleAddEntry = () => {
-        if (!newEntry.type || !newEntry.name || newEntry.cost <= 0) {
-            alert("Please fill all fields correctly.");
-            return;
+  const fetchProjectDetails = async () => {
+    try {
+      const response = await fetch(`${API_URL}/project-details?projectname=${project.projectname}`);
+      if (!response.ok) throw new Error('Failed to fetch project details');
+      const data = await response.json();
+      setProjectDetails(data);
+      setEditableQuotedAmount(data.quotedamount.toString());
+    } catch (error) {
+      console.error('Error fetching project details:', error);
+      setError(error.message);
+    }
+  };
+
+  const fetchEmployeeData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/get-expenses-for-deletion?projectname=${project.projectname}`);
+      if (!response.ok) throw new Error('Failed to fetch employee details');
+      const data = await response.json();
+      setEmployeeData(data);
+    } catch (error) {
+      console.error('Error fetching employee details:', error);
+      setError(error.message);
+    }
+  };
+
+  const fetchCategoryData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/category-details?projectname=${project.projectname}`);
+      if (!response.ok) throw new Error('Failed to fetch category details');
+      const data = await response.json();
+      
+      // Remove duplicates by creating a map of unique types
+      const uniqueTypes = {};
+      data.forEach(item => {
+        if (!uniqueTypes[item.type]) {
+          uniqueTypes[item.type] = item;
         }
+      });
+      
+      setCategoryData(Object.values(uniqueTypes));
+    } catch (error) {
+      console.error('Error fetching category details:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        fetch(`${API_URL}/add-entry`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...newEntry, projectname: project.projectname }),
-        })
-            .then((res) => res.json())
-            .then(() => {
-                alert("Entry added successfully!");
-                setNewEntry({ type: "", name: "", cost: 0 });
-            })
-            .catch((err) => console.error(err));
-    };
+  const handleUpdateQuotedAmount = async () => {
+    try {
+      const response = await fetch(`${API_URL}/update-project`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname,
+          quotedamount: parseInt(editableQuotedAmount),
+          totexpense: projectDetails.totexpense
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update project');
+      
+      const data = await response.json();
+      setProjectDetails({...projectDetails, quotedamount: parseInt(editableQuotedAmount)});
+      setIsEditingQuotedAmount(false);
+      Alert.alert("Success", "Quoted amount updated successfully!");
+    } catch (error) {
+      console.error('Error updating quoted amount:', error);
+      Alert.alert("Error", "Failed to update quoted amount");
+    }
+  };
 
+  const confirmDeleteExpense = (expense) => {
+    console.log("Expense to delete:", {
+      id: expense.id,
+      date: expense.date,
+      amount: expense.amount,
+      type: expense.type,
+      projectname: project.projectname
+    });
+    
+    setExpenseToDelete(expense);
+    setDeleteModalVisible(true);
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!expenseToDelete) return;
+  
+    try {
+      const response = await fetch(`${API_URL}/delete-expense`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: expenseToDelete.uid,
+          projectname: expenseToDelete.projectname,
+          id: expenseToDelete.id,
+          date: expenseToDelete.date
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete expense');
+      }
+  
+      // Update local state
+      setEmployeeData(prev => prev.filter(e => e.uid !== expenseToDelete.uid));
+      
+      // Update project totals
+      setProjectDetails(prev => ({
+        ...prev,
+        totexpense: prev.totexpense - expenseToDelete.amount
+      }));
+      
+      setDeleteModalVisible(false);
+      Alert.alert("Success", "Expense deleted successfully!");
+    } catch (error) {
+      console.error('Delete Error:', error);
+      Alert.alert("Error", error.message);
+    }
+  };
+  
+  const handleAddNewType = async () => {
+    if (!newTypeData.category || !newTypeData.type || !newTypeData.allocatedAmount) {
+      Alert.alert("Error", "Please fill all fields");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/add-payment-type`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname,
+          type: newTypeData.type,
+          estamount: parseInt(newTypeData.allocatedAmount),
+          expense: 0
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to add new type');
+      
+      const newType = {
+        type: newTypeData.type,
+        estamount: parseInt(newTypeData.allocatedAmount),
+        expense: 0
+      };
+      
+      setCategoryData([...categoryData, newType]);
+      setNewTypeData({ category: '', type: '', allocatedAmount: '' });
+      Alert.alert("Success", "New payment type added successfully!");
+    } catch (error) {
+      console.error('Error adding new type:', error);
+      Alert.alert("Error", "Failed to add new payment type");
+    }
+  };
+
+  const handleEditType = async () => {
+    if (!typeToEdit || !typeToEdit.estamount) {
+      Alert.alert("Error", "Please enter a valid amount");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/update-payment-type`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname,
+          type: typeToEdit.type,
+          estamount: parseInt(typeToEdit.estamount)
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update type');
+      
+      const updatedCategoryData = categoryData.map(item => {
+        if (item.type === typeToEdit.type) {
+          return {...item, estamount: parseInt(typeToEdit.estamount)};
+        }
+        return item;
+      });
+      
+      setCategoryData(updatedCategoryData);
+      setEditTypeModalVisible(false);
+      Alert.alert("Success", "Payment type updated successfully!");
+    } catch (error) {
+      console.error('Error updating type:', error);
+      Alert.alert("Error", "Failed to update payment type");
+    }
+  };
+
+  if (loading) {
     return (
-        <ScrollView style={styles.container}>
-            <Text style={styles.header}>Edit Project: {project.projectname}</Text>
-
-            <View style={styles.section}>
-                <Text style={styles.label}>Quoted Amount:</Text>
-                <TextInput
-                    value={editableProject.quotedamount.toString()}
-                    onChangeText={(text) => setEditableProject({ ...editableProject, quotedamount: text })}
-                    keyboardType="numeric"
-                    style={styles.input}
-                />
-
-                <Text style={styles.label}>Total Expense:</Text>
-                <TextInput
-                    value={editableProject.totexpense.toString()}
-                    onChangeText={(text) => setEditableProject({ ...editableProject, totexpense: text })}
-                    keyboardType="numeric"
-                    style={styles.input}
-                />
-
-                <TouchableOpacity style={styles.button} onPress={handleSaveProjectDetails}>
-                    <Text style={styles.buttonText}>Save Changes</Text>
-                </TouchableOpacity>
-            </View>
-
-            <Text style={styles.sectionTitle}>Project Details</Text>
-            <Text>{JSON.stringify(projectDetails, null, 2)}</Text>
-
-            <Text style={styles.sectionTitle}>Employee Details</Text>
-            {employeeDetails.map((emp, index) => (
-                <Text key={index} style={styles.detailItem}>{emp.name}</Text>
-            ))}
-
-            <Text style={styles.sectionTitle}>Category Details</Text>
-            {categoryDetails.map((cat, index) => (
-                <Text key={index} style={styles.detailItem}>{cat.name}</Text>
-            ))}
-
-            <Text style={styles.sectionTitle}>Add New Entry</Text>
-            <View style={styles.section}>
-                <Text style={styles.label}>Type:</Text>
-                <Picker
-                    selectedValue={newEntry.type}
-                    onValueChange={(itemValue) => setNewEntry({ ...newEntry, type: itemValue })}
-                    style={styles.picker}
-                >
-                    <Picker.Item label="Select" value="" />
-                    <Picker.Item label="Labour" value="labour" />
-                    <Picker.Item label="Machinery" value="machinery" />
-                    <Picker.Item label="Material" value="material" />
-                </Picker>
-
-                <Text style={styles.label}>Name:</Text>
-                <TextInput
-                    value={newEntry.name}
-                    onChangeText={(text) => setNewEntry({ ...newEntry, name: text })}
-                    style={styles.input}
-                />
-
-                <Text style={styles.label}>Cost:</Text>
-                <TextInput
-                    value={newEntry.cost.toString()}
-                    onChangeText={(text) => setNewEntry({ ...newEntry, cost: parseFloat(text) })}
-                    keyboardType="numeric"
-                    style={styles.input}
-                />
-
-                <TouchableOpacity style={styles.button} onPress={handleAddEntry}>
-                    <Text style={styles.buttonText}>Add Entry</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0078D4" />
+      </View>
     );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+      </View>
+    );
+  }
+
+  if (!projectDetails) {
+    return <Text>No project data available</Text>;
+  }
+
+  const { quotedamount, totexpense } = projectDetails;
+  const balanceAmount = quotedamount - totexpense;
+
+  return (
+    <View style={styles.mainContainer}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{project.projectname}</Text>
+          
+          <View style={styles.balanceCard}>
+            <Text style={styles.balanceTitle}>Project Balance</Text>
+            <Text style={styles.balanceAmount}>${balanceAmount.toFixed(2)}</Text>
+            
+            <View style={styles.balanceDetails}>
+              <View style={styles.balanceItem}>
+                <Text style={styles.balanceLabel}>Quoted</Text>
+                {isEditingQuotedAmount ? (
+                  <TextInput
+                    style={styles.amountInput}
+                    value={editableQuotedAmount}
+                    onChangeText={setEditableQuotedAmount}
+                    keyboardType="numeric"
+                    autoFocus
+                  />
+                ) : (
+                  <Text style={styles.balanceValue}>${quotedamount.toFixed(2)}</Text>
+                )}
+              </View>
+              
+              <View style={styles.balanceItem}>
+                <Text style={styles.balanceLabel}>Spent</Text>
+                <Text style={styles.balanceValue}>${totexpense.toFixed(2)}</Text>
+              </View>
+            </View>
+            
+            {isEditingQuotedAmount ? (
+              <View style={styles.editButtons}>
+                <TouchableOpacity 
+                  style={[styles.editButton, styles.saveButton]}
+                  onPress={handleUpdateQuotedAmount}
+                >
+                  <Text style={styles.buttonText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.editButton, styles.cancelButton]}
+                  onPress={() => {
+                    setIsEditingQuotedAmount(false);
+                    setEditableQuotedAmount(quotedamount.toString());
+                  }}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.editButton}
+                onPress={() => setIsEditingQuotedAmount(true)}
+              >
+                <Text style={styles.buttonText}>Edit Quoted Amount</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Employee Expenses Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Employee Expenses</Text>
+          
+          {/* Employee Expenses Search */}
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by name..."
+              value={employeeSearch.name}
+              onChangeText={(text) => setEmployeeSearch({...employeeSearch, name: text})}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by type..."
+              value={employeeSearch.type}
+              onChangeText={(text) => setEmployeeSearch({...employeeSearch, type: text})}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by date (YYYY-MM-DD)..."
+              value={employeeSearch.date}
+              onChangeText={(text) => setEmployeeSearch({...employeeSearch, date: text})}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          {/* Filtered employee list */}
+          {filteredEmployeeData.map((item) => (
+            <View key={item.uid} style={styles.expenseCard}>
+              <View style={styles.expenseHeader}>
+                <Text style={styles.expenseName}>{item.name}</Text>
+                <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+              </View>
+              <View style={styles.expenseDetails}>
+                <Text style={styles.expenseType}>{item.type}</Text>
+                <Text style={styles.expenseDate}>{item.date}</Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.deleteButton}
+                onPress={() => confirmDeleteExpense(item)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {/* Sum of filtered employee expenses */}
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryText}>
+              Total Filtered Expenses: ${filteredEmployeeSum.toFixed(2)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Payment Types Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Payment Types</Text>
+          
+          {/* Payment Types Search */}
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search payment types..."
+              value={paymentTypeSearch}
+              onChangeText={setPaymentTypeSearch}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          {/* Filtered payment types list */}
+          {filteredCategoryData.map((item) => (
+            <View key={item.type} style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <Text style={styles.categoryType}>{item.type}</Text>
+                <TouchableOpacity 
+                  style={styles.editTypeButton}
+                  onPress={() => {
+                    setTypeToEdit(item);
+                    setEditTypeModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.editTypeButtonText}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.categoryDetails}>
+                <View style={styles.categoryItem}>
+                  <Text style={styles.categoryLabel}>Estimated</Text>
+                  <Text style={styles.categoryValue}>${item.estamount.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryItem}>
+                  <Text style={styles.categoryLabel}>Actual</Text>
+                  <Text style={styles.categoryValue}>${item.expense.toFixed(2)}</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+
+          {/* Sum of filtered payment type expenses */}
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryText}>
+              Total Filtered Expenses: ${filteredPaymentTypeSum.toFixed(2)}
+            </Text>
+          </View>
+
+          {/* Add New Payment Type Form */}
+          <View style={styles.addTypeForm}>
+            <Text style={styles.formTitle}>Add New Payment Type</Text>
+            
+            <Text style={styles.label}>Category</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={newTypeData.category}
+                style={styles.picker}
+                onValueChange={(itemValue) => setNewTypeData({...newTypeData, category: itemValue, type: ''})}
+              >
+                <Picker.Item label="Select Category" value="" />
+                <Picker.Item label="Labour" value="labour" />
+                <Picker.Item label="Material" value="material" />
+                <Picker.Item label="Machinery" value="machinery" />
+              </Picker>
+            </View>
+            
+            <Text style={styles.label}>Type</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={newTypeData.type}
+                style={styles.picker}
+                onValueChange={(itemValue) => setNewTypeData({...newTypeData, type: itemValue})}
+                enabled={newTypeData.category !== ''}
+              >
+                <Picker.Item label="Select Type" value="" />
+                {newTypeData.category && categoryTypes[newTypeData.category]?.map((type, index) => (
+                  <Picker.Item key={index} label={type} value={type} />
+                ))}
+              </Picker>
+            </View>
+            
+            <Text style={styles.label}>Amount Allocated</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter allocated amount"
+              value={newTypeData.allocatedAmount}
+              onChangeText={(text) => setNewTypeData({...newTypeData, allocatedAmount: text})}
+              keyboardType="numeric"
+            />
+            
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={handleAddNewType}
+            >
+              <Text style={styles.buttonText}>Add Payment Type</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={deleteModalVisible}
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Confirm Delete</Text>
+              <Text style={styles.modalText}>
+                Are you sure you want to delete this expense of ${expenseToDelete?.amount.toFixed(2)}?
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelModalButton]}
+                  onPress={() => setDeleteModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.deleteModalButton]}
+                  onPress={handleDeleteExpense}
+                >
+                  <Text style={styles.modalButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Type Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={editTypeModalVisible}
+        onRequestClose={() => setEditTypeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Edit Payment Type</Text>
+              <Text style={styles.modalText}>{typeToEdit?.type}</Text>
+              
+              <Text style={styles.label}>Estimated Amount</Text>
+              <TextInput
+                style={styles.input}
+                value={typeToEdit?.estamount?.toString()}
+                onChangeText={(text) => setTypeToEdit({...typeToEdit, estamount: text})}
+                keyboardType="numeric"
+              />
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelModalButton]}
+                  onPress={() => setEditTypeModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.saveModalButton]}
+                  onPress={handleEditType}
+                >
+                  <Text style={styles.modalButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 20,
-        backgroundColor: "#f8f9fa",
-    },
-    header: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 20,
-    },
-    section: {
-        backgroundColor: "white",
-        padding: 15,
-        borderRadius: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
-        marginBottom: 20,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginTop: 20,
-    },
-    label: {
-        fontSize: 16,
-        fontWeight: "500",
-        marginBottom: 5,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: "#ccc",
-        padding: 10,
-        borderRadius: 5,
-        marginBottom: 10,
-        backgroundColor: "#fff",
-    },
-    picker: {
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 5,
-        backgroundColor: "#fff",
-    },
-    detailItem: {
-        fontSize: 16,
-        paddingVertical: 5,
-    },
-    button: {
-        backgroundColor: "#007bff",
-        padding: 12,
-        borderRadius: 5,
-        alignItems: "center",
-        marginTop: 10,
-    },
-    buttonText: {
-        color: "white",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+  container: {
+    flex: 1,
+  },
+  header: {
+    padding: 20,
+    backgroundColor: '#2E3A59',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 20,
+  },
+  balanceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 3,
+  },
+  balanceTitle: {
+    fontSize: 16,
+    color: '#8F9BB3',
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 16,
+  },
+  balanceDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  balanceItem: {
+    alignItems: 'center',
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  balanceValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  amountInput: {
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    borderRadius: 5,
+    padding: 8,
+    fontSize: 16,
+    width: 100,
+    textAlign: 'center',
+  },
+  editButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  editButton: {
+    backgroundColor: '#0078D4',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelButton: {
+    backgroundColor: '#F44336',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  section: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 16,
+  },
+  expenseCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0078D4',
+  },
+  expenseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  expenseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  expenseAmount: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0078D4',
+  },
+  expenseDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  expenseType: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  expenseDate: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  deleteButton: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    padding: 5,
+  },
+  deleteButtonText: {
+    color: '#F44336',
+    fontSize: 14,
+  },
+  categoryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  categoryType: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  editTypeButton: {
+    padding: 5,
+  },
+  editTypeButtonText: {
+    color: '#0078D4',
+    fontSize: 14,
+  },
+  categoryDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  categoryItem: {
+    alignItems: 'center',
+  },
+  categoryLabel: {
+    fontSize: 14,
+    color: '#8F9BB3',
+  },
+  categoryValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+  },
+  addTypeForm: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginTop: 20,
+  },
+  formTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E3A59',
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 14,
+    color: '#8F9BB3',
+    marginBottom: 5,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    borderRadius: 8,
+    marginBottom: 15,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  addButton: {
+    backgroundColor: '#2E3A59',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContainer: {
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#2E3A59',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  modalButton: {
+    borderRadius: 8,
+    padding: 12,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  deleteModalButton: {
+    backgroundColor: '#FF3D71',
+  },
+  saveModalButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelModalButton: {
+    backgroundColor: '#8F9BB3',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#FF3D71',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 10,
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: '30%',
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    margin: 5,
+    backgroundColor: '#F5F7FA',
+  },
+  summaryContainer: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 10,
+    alignItems: 'flex-end'
+  },
+  summaryText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2E3A59'
+  }
 });
 
 export default EditProject;
