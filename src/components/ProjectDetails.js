@@ -13,7 +13,7 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
-const API_URL = "http://192.168.150.250:5000";
+const API_URL = "http://192.168.116.233:5000";
 
 const ProjectDetails = () => {
   const route = useRoute();
@@ -24,6 +24,8 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editableQuotedAmount, setEditableQuotedAmount] = useState('');
+  const [predictionProjectName, setPredictionProjectName] = useState('');
+  const [predictedAmount, setPredictedAmount] = useState(null);
   const [isEditingQuotedAmount, setIsEditingQuotedAmount] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
@@ -131,27 +133,28 @@ const ProjectDetails = () => {
     }
   };
 
-  const handleUpdateQuotedAmount = async () => {
+  const handlePredictAmount = async () => {
+    if (!project.projectname) {
+      Alert.alert("Error", "Please enter a project name");
+      return;
+    }
+  
     try {
-      const response = await fetch(`${API_URL}/update-project`, {
+      const response = await fetch(`${API_URL}/check-overrun`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectname: project.projectname,
-          quotedamount: parseInt(editableQuotedAmount),
-          totexpense: projectDetails.totexpense
-        }),
+        body: JSON.stringify({ projectname: project.projectname }),
       });
-      
-      if (!response.ok) throw new Error('Failed to update project');
-      
+  
+      if (!response.ok) throw new Error('Failed to fetch predicted amount');
+  
       const data = await response.json();
-      setProjectDetails({...projectDetails, quotedamount: parseInt(editableQuotedAmount)});
-      setIsEditingQuotedAmount(false);
-      Alert.alert("Success", "Quoted amount updated successfully!");
+      setPredictedAmount(data.predicted_cost);
+      Alert.alert("Prediction Success", `Predicted Amount: $${data.predicted_cost}`);
+      Alert.alert("May be",`$${data.overrun}`)
     } catch (error) {
-      console.error('Error updating quoted amount:', error);
-      Alert.alert("Error", "Failed to update quoted amount");
+      console.error('Error fetching predicted amount:', error);
+      Alert.alert("Error", "Failed to fetch predicted amount");
     }
   };
 
@@ -467,7 +470,21 @@ const ProjectDetails = () => {
             </Text>
           </View>
 
-          {/* Add New Payment Type Form */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Predict Project Amount</Text>
+
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={handlePredictAmount}
+            >
+              <Text style={styles.buttonText}>Predict Amount</Text>
+            </TouchableOpacity>
+            {predictedAmount !== null && (
+              <Text style={styles.predictionText}>
+                Predicted Amount: ${predictedAmount.toFixed(2)}
+              </Text>
+            )}
+          </View>
           <View style={styles.addTypeForm}>
             <Text style={styles.formTitle}>Add New Payment Type</Text>
             
