@@ -9,7 +9,7 @@ import MachineryFormScreen from './src/components/MachineryFormScreen';
 import ProjectFormScreen from './src/components/ProjectFormScreen'; // Import the screen
 import AddExpenseScreen from './src/components/AddExpenseScreen';
 import SearchProject from './src/components/SearchProject';
-import ProjectDetails from './src/components/ProjectDetails'; 
+import ProjectDetails from './src/components/ProjectDetails';
 import SearchUserScreen from './src/components/SearchUserScreen';
 import UserFinancialDetailScreen from './src/components/UserFinancialDetailScreen';
 import Project from './src/components/Project';
@@ -24,22 +24,22 @@ const App = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="CategorySelection" component={CategorySelection} />
-        <Stack.Screen name="LabourForm" component={LabourFormScreen} />
-        <Stack.Screen name="MaterialForm" component={MaterialFormScreen} />
-        <Stack.Screen name="MachineryFormScreen" component={MachineryFormScreen} />
-        <Stack.Screen name="ProjectFormScreen" component={ProjectFormScreen} />
-        <Stack.Screen name="AddExpense" component={AddExpenseScreen} />
-        <Stack.Screen name="SearchProject" component={SearchProject} />
-        <Stack.Screen name="ProjectDetails" component={ProjectDetails} />
-        <Stack.Screen name="SearchUserScreen" component={SearchUserScreen} /> 
-        <Stack.Screen name="UserFinancialDetailScreen" component={UserFinancialDetailScreen} />
-        <Stack.Screen name="Project" component={Project} />
-        <Stack.Screen name="Labor" component={Labor} />
-        <Stack.Screen name="EditScreen" component={EditScreen} />
-        <Stack.Screen name="EditProject" component={EditProject} />
-        <Stack.Screen name="EditLabour" component={EditLabour} />
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CategorySelection" component={CategorySelection} options={{ headerShown: false }} />
+        <Stack.Screen name="LabourForm" component={LabourFormScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="MaterialForm" component={MaterialFormScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="MachineryFormScreen" component={MachineryFormScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ProjectFormScreen" component={ProjectFormScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SearchProject" component={SearchProject} options={{ headerShown: false }} />
+        <Stack.Screen name="ProjectDetails" component={ProjectDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="SearchUserScreen" component={SearchUserScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="UserFinancialDetailScreen" component={UserFinancialDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Project" component={Project} options={{ headerShown: false }} />
+        <Stack.Screen name="Labor" component={Labor} options={{ headerShown: false }} />
+        <Stack.Screen name="EditScreen" component={EditScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="EditProject" component={EditProject} options={{ headerShown: false }} />
+        <Stack.Screen name="EditLabour" component={EditLabour} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

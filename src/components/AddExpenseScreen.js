@@ -7,10 +7,10 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.141.250:5000/projects'; 
-const FETCH_ID_URL = 'http://192.168.141.250:5000/get_project_payment_details';
-const ADD_EXPENSE_URL = 'http://192.168.141.250:5000/add_expense';
-const CHECK_OVERRUN_URL = 'http://192.168.141.250:5000/check-overrun';
+const API_URL = 'http://192.168.116.233:5000/projects'; 
+const FETCH_ID_URL = 'http://192.168.116.233:5000/get_project_payment_details';
+const ADD_EXPENSE_URL = 'http://192.168.116.233:5000/add_expense';
+const CHECK_OVERRUN_URL = 'http://192.168.116.233:5000/check-overrun';
 
 const AddExpenseScreen = () => {
   // Existing state variables
@@ -77,7 +77,7 @@ const AddExpenseScreen = () => {
   const fetchPickerOptions = async (category) => {
     try {
       console.log(`Fetching options for category: ${category}`);
-      const response = await axios.get(`http://192.168.141.250:5000/${category}`);
+      const response = await axios.get(`http://192.168.116.233:5000/${category}`);
       
       console.log('API Response:', response.data);
 
@@ -459,6 +459,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContainer: {
     flexGrow: 1,
+    justifyContent: 'center',
     padding: 20,
   },
   formContainer: {

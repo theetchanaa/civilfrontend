@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const API_URL = 'http://192.168.141.250:5000/projects';
+const API_URL = 'http://192.168.116.233:5000/projects';
 
 const SearchProject = () => {
   const navigation = useNavigation();
@@ -90,8 +90,8 @@ const SearchProject = () => {
               >
                 <Text style={styles.projectName}>{project.projectname}</Text>
                 <View style={styles.projectDetails}>
-                  <Text style={styles.detailText}>Quoted Amount: ${project.quotedamount}</Text>
-                  <Text style={styles.detailText}>Total Expense: ${project.totexpense}</Text>
+                  <Text style={styles.detailText}>Quoted Amount: ₹{project.quotedamount}</Text>
+                  <Text style={styles.detailText}>Total Expense: ₹{project.totexpense}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   formContainer: {
+    marginTop: 50,
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
     padding: 20,

@@ -13,11 +13,7 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
-<<<<<<< HEAD
 const API_URL = "http://192.168.116.233:5000";
-=======
-const API_URL = "http://192.168.141.250:5000";
->>>>>>> 4ec68c3b21fa9c6f10cb84efd1987ffcbe3efdc1
 
 const ProjectDetails = () => {
   const route = useRoute();
@@ -350,7 +346,7 @@ const ProjectDetails = () => {
           
           <View style={styles.balanceCard}>
             <Text style={styles.balanceTitle}>Project Balance</Text>
-            <Text style={styles.balanceAmount}>${balanceAmount.toFixed(2)}</Text>
+            <Text style={styles.balanceAmount}>₹{balanceAmount.toFixed(2)}</Text>
             
             <View style={styles.balanceDetails}>
               <View style={styles.balanceItem}>
@@ -364,13 +360,13 @@ const ProjectDetails = () => {
                     autoFocus
                   />
                 ) : (
-                  <Text style={styles.balanceValue}>${quotedamount.toFixed(2)}</Text>
+                  <Text style={styles.balanceValue}>₹{quotedamount.toFixed(2)}</Text>
                 )}
               </View>
               
               <View style={styles.balanceItem}>
                 <Text style={styles.balanceLabel}>Spent</Text>
-                <Text style={styles.balanceValue}>${totexpense.toFixed(2)}</Text>
+                <Text style={styles.balanceValue}>₹{totexpense.toFixed(2)}</Text>
               </View>
             </View>
             
@@ -417,7 +413,7 @@ const ProjectDetails = () => {
             ) : predictionResult ? (
               <View style={styles.predictionResult}>
                 <Text style={styles.predictionAmount}>
-                  Predicted Final Cost: ${predictionResult.predicted_cost.toFixed(2)}
+                  Predicted Final Cost: ₹{predictionResult.predicted_cost.toFixed(2)}
                 </Text>
                 
                 <View style={[
@@ -432,7 +428,7 @@ const ProjectDetails = () => {
                 {predictionResult.overrun && (
                   <Text style={styles.warningText}>
                     Warning: The project is predicted to exceed the quoted budget by 
-                    ${(predictionResult.predicted_cost - quotedamount).toFixed(2)}
+                    ₹{(predictionResult.predicted_cost - quotedamount).toFixed(2)}
                   </Text>
                 )}
                 
@@ -488,7 +484,7 @@ const ProjectDetails = () => {
             <View key={item.uid} style={styles.expenseCard}>
               <View style={styles.expenseHeader}>
                 <Text style={styles.expenseName}>{item.name}</Text>
-                <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                <Text style={styles.expenseAmount}>₹{item.amount.toFixed(2)}</Text>
               </View>
               <View style={styles.expenseDetails}>
                 <Text style={styles.expenseType}>{item.type}</Text>
@@ -506,7 +502,7 @@ const ProjectDetails = () => {
           {/* Sum of filtered employee expenses */}
           <View style={styles.summaryContainer}>
             <Text style={styles.summaryText}>
-              Total Filtered Expenses: ${filteredEmployeeSum.toFixed(2)}
+              Total Filtered Expenses: ₹{filteredEmployeeSum.toFixed(2)}
             </Text>
           </View>
         </View>
@@ -545,11 +541,11 @@ const ProjectDetails = () => {
               <View style={styles.categoryDetails}>
                 <View style={styles.categoryItem}>
                   <Text style={styles.categoryLabel}>Estimated</Text>
-                  <Text style={styles.categoryValue}>${item.estamount.toFixed(2)}</Text>
+                  <Text style={styles.categoryValue}>₹{item.estamount.toFixed(2)}</Text>
                 </View>
                 <View style={styles.categoryItem}>
                   <Text style={styles.categoryLabel}>Actual</Text>
-                  <Text style={styles.categoryValue}>${item.expense.toFixed(2)}</Text>
+                  <Text style={styles.categoryValue}>₹{item.expense.toFixed(2)}</Text>
                 </View>
               </View>
             </View>
@@ -558,25 +554,11 @@ const ProjectDetails = () => {
           {/* Sum of filtered payment type expenses */}
           <View style={styles.summaryContainer}>
             <Text style={styles.summaryText}>
-              Total Filtered Expenses: ${filteredPaymentTypeSum.toFixed(2)}
+              Total Filtered Expenses: ₹{filteredPaymentTypeSum.toFixed(2)}
             </Text>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Predict Project Amount</Text>
-
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={handlePredictAmount}
-            >
-              <Text style={styles.buttonText}>Predict Amount</Text>
-            </TouchableOpacity>
-            {predictedAmount !== null && (
-              <Text style={styles.predictionText}>
-                Predicted Amount: ${predictedAmount.toFixed(2)}
-              </Text>
-            )}
-          </View>
+         
           <View style={styles.addTypeForm}>
             <Text style={styles.formTitle}>Add New Payment Type</Text>
             
@@ -640,7 +622,7 @@ const ProjectDetails = () => {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Confirm Delete</Text>
               <Text style={styles.modalText}>
-                Are you sure you want to delete this expense of ${expenseToDelete?.amount.toFixed(2)}?
+                Are you sure you want to delete this expense of ₹{expenseToDelete?.amount.toFixed(2)}?
               </Text>
               <View style={styles.modalButtons}>
                 <TouchableOpacity 

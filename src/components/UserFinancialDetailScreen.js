@@ -12,7 +12,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import moment from 'moment';
 
-const API_BASE_URL = 'http://192.168.141.250:5000';
+const API_BASE_URL = 'http://192.168.116.233:5000';
 
 const UserFinancialDetails = () => {
   const { params } = useRoute();
@@ -67,7 +67,6 @@ const UserFinancialDetails = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Search Projects</Text>
       </View>
 
       <View style={styles.searchSection}>
@@ -156,12 +155,12 @@ const UserFinancialDetails = () => {
                 <View style={styles.resultRow}>
                   <Text style={[styles.resultText, styles.projectColumn]}>{item.project_name}</Text>
                   <Text style={[styles.resultText, styles.dateColumn]}>{moment(item.date).format('DD/MM/YYYY')}</Text>
-                  <Text style={[styles.resultText, styles.expenseColumn]}>${item.expense}</Text>
+                  <Text style={[styles.resultText, styles.expenseColumn]}>₹{item.expense}</Text>
                 </View>
               )}
             />
             <View style={styles.totalRow}>
-              <Text style={styles.totalText}>Total Expense: ${totalAmount.toFixed(2)}</Text>
+              <Text style={styles.totalText}>Total Expense: ₹{totalAmount.toFixed(2)}</Text>
             </View>
           </View>
         ) : (

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Modal, Button, ActivityIndicator } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
-const API_URL = "http://192.168.141.250:5000"; // Flask API URL
+const API_URL = "http://192.168.116.233:5000"; // Flask API URL
 
 const Labor = () => {
   const [categories, setCategories] = useState([]);
@@ -148,7 +148,6 @@ const Labor = () => {
   
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Project Categories</Text>
 
       <TextInput
         style={styles.searchInput}
@@ -286,7 +285,7 @@ const Labor = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#f4f4f8" },
+  container: { flex: 1, padding: 20,marginTop:50, backgroundColor: "#f4f4f8" },
   header: { fontSize: 28, fontWeight: "bold", marginBottom: 20, textAlign: "center", color: "#333" },
   searchInput: {
     borderWidth: 1,

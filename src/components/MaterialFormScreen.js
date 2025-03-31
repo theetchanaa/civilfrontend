@@ -25,7 +25,7 @@ const MaterialFormScreen = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://192.168.141.250:5000/material');
+        const response = await fetch('http://192.168.116.233:5000/material');
         const data = await response.json();
         console.log(data);
         setIndustryOptions(data.material);
@@ -56,7 +56,7 @@ const MaterialFormScreen = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const labourResponse = await fetch('http://192.168.141.250:5000/add-material', {
+        const labourResponse = await fetch('http://192.168.116.233:5000/add-material', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ const MaterialFormScreen = () => {
         }
       }
 
-      const response = await fetch('http://192.168.141.250:5000/add-category', {
+      const response = await fetch('http://192.168.116.233:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,10 +198,11 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   scrollViewContainer: {
-    padding: 20,
-    paddingBottom: 50,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   input: {
     backgroundColor: '#FFFFFF',
