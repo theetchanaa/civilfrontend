@@ -13,7 +13,11 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
+<<<<<<< HEAD
 const API_URL = "http://192.168.116.233:5000";
+=======
+const API_URL = "http://192.168.141.250:5000";
+>>>>>>> 4ec68c3b21fa9c6f10cb84efd1987ffcbe3efdc1
 
 const ProjectDetails = () => {
   const route = useRoute();
@@ -42,6 +46,9 @@ const ProjectDetails = () => {
     date: ''
   });
   const [paymentTypeSearch, setPaymentTypeSearch] = useState('');
+  // Add new state for ML prediction
+  const [predictionResult, setPredictionResult] = useState(null);
+  const [predictionLoading, setPredictionLoading] = useState(false);
 
   // Category types mapping
   const categoryTypes = {
@@ -158,6 +165,35 @@ const ProjectDetails = () => {
     }
   };
 
+  // Add new function to check cost overrun prediction
+  const checkCostOverrun = async () => {
+    setPredictionLoading(true);
+    setPredictionResult(null);
+    
+    try {
+      const response = await fetch(`${API_URL}/check-overrun`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get prediction');
+      }
+      
+      const data = await response.json();
+      setPredictionResult(data);
+    } catch (error) {
+      console.error('Prediction Error:', error);
+      Alert.alert("Error", `Failed to get prediction: ${error.message}`);
+    } finally {
+      setPredictionLoading(false);
+    }
+  };
+
   const confirmDeleteExpense = (expense) => {
     console.log("Expense to delete:", {
       id: expense.id,
@@ -172,42 +208,47 @@ const ProjectDetails = () => {
   };
 
   const handleDeleteExpense = async () => {
-    if (!expenseToDelete) return;
-  
+    if (!expenseToDelete?.uid) return;
+
     try {
-      const response = await fetch(`${API_URL}/delete-expense`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: expenseToDelete.uid,
-          projectname: expenseToDelete.projectname,
-          id: expenseToDelete.id,
-          date: expenseToDelete.date
-        }),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete expense');
-      }
-  
-      // Update local state
-      setEmployeeData(prev => prev.filter(e => e.uid !== expenseToDelete.uid));
-      
-      // Update project totals
-      setProjectDetails(prev => ({
-        ...prev,
-        totexpense: prev.totexpense - expenseToDelete.amount
-      }));
-      
-      setDeleteModalVisible(false);
-      Alert.alert("Success", "Expense deleted successfully!");
+        const response = await fetch(`${API_URL}/delete-expense`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                uid: expenseToDelete.uid, // Only uid is needed
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to delete expense");
+        }
+
+        // Update local state: Remove deleted expense
+        setEmployeeData(prev => prev.filter(e => e.uid !== expenseToDelete.uid));
+
+        // Update project totals: Subtract expense
+        setProjectDetails(prev => ({
+            ...prev,
+            totexpense: prev.totexpense - expenseToDelete.amount
+        }));
+
+        // Update category data: Subtract amount from the matching type
+        setCategoryData(prev => prev.map(category =>
+            category.type === expenseToDelete.type
+                ? { ...category, expense: category.expense - expenseToDelete.amount }
+                : category
+        ));
+
+        setDeleteModalVisible(false);
+        Alert.alert("Success", "Expense deleted successfully!");
     } catch (error) {
-      console.error('Delete Error:', error);
-      Alert.alert("Error", error.message);
+        console.error("Delete Error:", error);
+        Alert.alert("Error", error.message);
     }
-  };
-  
+};
+
+
   const handleAddNewType = async () => {
     if (!newTypeData.category || !newTypeData.type || !newTypeData.allocatedAmount) {
       Alert.alert("Error", "Please fill all fields");
@@ -357,6 +398,57 @@ const ProjectDetails = () => {
                 onPress={() => setIsEditingQuotedAmount(true)}
               >
                 <Text style={styles.buttonText}>Edit Quoted Amount</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Cost Prediction Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Cost Prediction</Text>
+          
+          <View style={styles.predictionCard}>
+            <Text style={styles.predictionText}>
+              Get an ML-based prediction for the final cost of this project based on current progress and expenses.
+            </Text>
+            
+            {predictionLoading ? (
+              <ActivityIndicator size="large" color="#0078D4" style={styles.predictionLoading} />
+            ) : predictionResult ? (
+              <View style={styles.predictionResult}>
+                <Text style={styles.predictionAmount}>
+                  Predicted Final Cost: ${predictionResult.predicted_cost.toFixed(2)}
+                </Text>
+                
+                <View style={[
+                  styles.overrunIndicator, 
+                  {backgroundColor: predictionResult.overrun ? '#FF3D71' : '#4CAF50'}
+                ]}>
+                  <Text style={styles.overrunText}>
+                    {predictionResult.overrun ? 'Budget Overrun Predicted' : 'Within Budget'}
+                  </Text>
+                </View>
+                
+                {predictionResult.overrun && (
+                  <Text style={styles.warningText}>
+                    Warning: The project is predicted to exceed the quoted budget by 
+                    ${(predictionResult.predicted_cost - quotedamount).toFixed(2)}
+                  </Text>
+                )}
+                
+                <TouchableOpacity 
+                  style={styles.refreshButton}
+                  onPress={checkCostOverrun}
+                >
+                  <Text style={styles.buttonText2}>Refresh Prediction</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.predictButton}
+                onPress={checkCostOverrun}
+              >
+                <Text style={styles.buttonText2}>Generate Cost Prediction</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -695,6 +787,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  buttonText2: {
+    color: '#0078D4',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   section: {
     padding: 20,
   },
@@ -932,6 +1029,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2E3A59'
+  },
+  resultContainer: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 10,
+  },
+  resultText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+  },
+  resultValue: {
+    fontSize: 16,
+    color: '#2E3A59',
   }
 });
 

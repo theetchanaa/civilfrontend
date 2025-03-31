@@ -13,7 +13,7 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
-const API_URL = "http://192.168.150.250:5000";
+const API_URL = "http://192.168.141.250:5000";
 
 const EditProject = () => {
   const route = useRoute();

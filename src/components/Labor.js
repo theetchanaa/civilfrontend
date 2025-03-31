@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Modal, Button, ActivityIndicator } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
-const API_URL = "http://192.168.150.250:5000"; // Flask API URL
+const API_URL = "http://192.168.141.250:5000"; // Flask API URL
 
 const Labor = () => {
   const [categories, setCategories] = useState([]);

@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, TextInput, StyleSheet, TouchableOpacity, Button, Alert, 
-  FlatList, KeyboardAvoidingView, ScrollView, TouchableWithoutFeedback, Keyboard, ActivityIndicator
+  FlatList, KeyboardAvoidingView, ScrollView, TouchableWithoutFeedback, Keyboard, ActivityIndicator,
+  Modal
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.150.250:5000/projects'; // Update with your backend URL
-const FETCH_ID_URL = 'http://192.168.150.250:5000/get_project_payment_details'; // Replace with actual endpoint
-const ADD_EXPENSE_URL = 'http://192.168.150.250:5000/add_expense';
+const API_URL = 'http://192.168.141.250:5000/projects'; 
+const FETCH_ID_URL = 'http://192.168.141.250:5000/get_project_payment_details';
+const ADD_EXPENSE_URL = 'http://192.168.141.250:5000/add_expense';
+const CHECK_OVERRUN_URL = 'http://192.168.141.250:5000/check-overrun';
 
 const AddExpenseScreen = () => {
+  // Existing state variables
   const [searchQuery, setSearchQuery] = useState('');
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
@@ -21,14 +24,18 @@ const AddExpenseScreen = () => {
   const [selectedPickerValue, setSelectedPickerValue] = useState('');
   const [expense, setExpense] = useState('');
   const [searchText, setSearchText] = useState('');
-  const [projectDetails, setProjectDetails] = useState(null); // Stores fetched project name & id
-  const [namePhoneOptions, setNamePhoneOptions] = useState([]); // Stores fetched name & phone data
-  const [filteredOptions, setFilteredOptions] = useState([]); // Stores filtered suggestions
-
-
+  const [projectDetails, setProjectDetails] = useState(null);
+  const [namePhoneOptions, setNamePhoneOptions] = useState([]);
+  const [filteredOptions, setFilteredOptions] = useState([]);
+  
+  // New state variables for overrun warnings
+  const [showOverrunWarning, setShowOverrunWarning] = useState(false);
+  const [overrunData, setOverrunData] = useState(null);
+  const [submittingExpense, setSubmittingExpense] = useState(false);
 
   const types = ['labour', 'material', 'machinery'];
 
+  // Existing useEffect hooks...
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -45,13 +52,13 @@ const AddExpenseScreen = () => {
     }
   }, [selectedProject, selectedPickerValue]);
 
-  // Auto-fill searchText when both project and picker option are selected
   useEffect(() => {
     if (selectedProject && selectedType) {
       fetchProjectDetails(selectedProject.projectname, selectedType);
     }
   }, [selectedProject, selectedType]);
 
+  
   // Fetch project list
   const fetchProjects = async () => {
     try {
@@ -70,7 +77,7 @@ const AddExpenseScreen = () => {
   const fetchPickerOptions = async (category) => {
     try {
       console.log(`Fetching options for category: ${category}`);
-      const response = await axios.get(`http://192.168.150.250:5000/${category}`);
+      const response = await axios.get(`http://192.168.141.250:5000/${category}`);
       
       console.log('API Response:', response.data);
 
@@ -115,6 +122,30 @@ const AddExpenseScreen = () => {
   
 
 
+  // New function to check for potential overruns
+  const checkOverrun = async (projectname) => {
+    try {
+      const response = await axios.post(CHECK_OVERRUN_URL, {
+        projectname: projectname
+      });
+      
+      console.log('Overrun check response:', response.data);
+      
+      if (response.data.overrun) {
+        setOverrunData({
+          isOverrun: response.data.overrun,
+          predictedCost: response.data.predicted_cost
+        });
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking for overrun:', error);
+      return false;
+    }
+  };
+
   const handleSearch = (query) => {
     setSearchQuery(query);
     const filtered = projects.filter((project) =>
@@ -123,14 +154,17 @@ const AddExpenseScreen = () => {
     setFilteredProjects(filtered);
   };
 
+  // Modified handleSubmit function
   const handleSubmit = async () => {
     if (!selectedProject || !selectedType || !searchText || !expense) {
       Alert.alert('Error', 'Please fill in all fields before submitting.');
       return;
     }
   
+    setSubmittingExpense(true);
+    
     try {
-      const categoryId = searchText.split(' - ').pop(); // Extract ID from search text
+      const categoryId = searchText.split(' - ').pop();
       const response = await axios.post(ADD_EXPENSE_URL, {
         projectname: selectedProject.projectname,
         category_id: categoryId,
@@ -139,36 +173,53 @@ const AddExpenseScreen = () => {
       });
   
       if (response.status === 200) {
-        Alert.alert('Success', 'Expense added successfully!');
-  
-        // Reset the form fields
-        setSelectedProject(null);
-        setSearchQuery('');
-        setFilteredProjects(projects);
-        setSelectedType('');
-        setSelectedPickerValue('');
-        setPickerOptions([]);
-        setSearchText('');
-        setExpense('');
-  
-        // Fetch updated projects or data
-        fetchProjects(); // Refresh projects list
+        // After successful submission, check for potential overruns
+        const hasOverrun = await checkOverrun(selectedProject.projectname);
+        
+        if (hasOverrun) {
+          setShowOverrunWarning(true);
+        } else {
+          Alert.alert('Success', 'Expense added successfully!');
+          resetForm();
+        }
       } else {
         Alert.alert('Error', 'Failed to add expense.');
       }
     } catch (error) {
       console.error('Error submitting expense:', error);
       Alert.alert('Error', 'Selected project details doesn\'t have quoted amount.');
+    } finally {
+      setSubmittingExpense(false);
     }
   };
   
+  // Function to reset form fields
+  const resetForm = () => {
+    setSelectedProject(null);
+    setSearchQuery('');
+    setFilteredProjects(projects);
+    setSelectedType('');
+    setSelectedPickerValue('');
+    setPickerOptions([]);
+    setSearchText('');
+    setExpense('');
+    fetchProjects();
+  };
 
+  // Function to handle acknowledging the overrun warning
+  const handleOverrunConfirm = () => {
+    setShowOverrunWarning(false);
+    Alert.alert('Expense Added', 'Expense has been added successfully, but please note the potential budget overrun.');
+    resetForm();
+  };
 
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={styles.scrollViewContainer}>
           <View style={styles.formContainer}>
+            {/* Existing form elements... */}
+            
             {/* Search Project */}
             <Text style={styles.label}>Search Project</Text>
             <TextInput
@@ -179,6 +230,7 @@ const AddExpenseScreen = () => {
               placeholderTextColor="#999"
             />
 
+            {/* Rest of your existing form... */}
             {loading ? (
               <ActivityIndicator size="large" color="#0078D4" />
             ) : (
@@ -304,19 +356,103 @@ const AddExpenseScreen = () => {
             {/* Submit Button */}
             <View style={styles.submitButtonContainer}>
               <Button 
-                title="Submit"
+                title={submittingExpense ? "Submitting..." : "Submit"}
                 onPress={handleSubmit}
                 color="#2E3A59"
+                disabled={submittingExpense}
               />
             </View>
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
+      
+      {/* Overrun Warning Modal */}
+      <Modal
+        visible={showOverrunWarning}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>⚠ Budget Overrun Warning</Text>
+            <Text style={styles.modalText}>
+              Our predictive model indicates this project may exceed its budget.
+            </Text>
+            {overrunData && (
+              <View style={styles.overrunDetails}>
+                <Text style={styles.overrunText}>
+                  Predicted total cost: ₹{overrunData.predictedCost.toLocaleString()}
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={handleOverrunConfirm}
+            >
+              <Text style={styles.confirmButtonText}>Acknowledge</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#E74C3C',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#333',
+  },
+  overrunDetails: {
+    backgroundColor: '#F8F9FA',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+    width: '100%',
+  },
+  overrunText: {
+    fontSize: 15,
+    color: '#E74C3C',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  confirmButton: {
+    backgroundColor: '#2E3A59',
+    padding: 12,
+    borderRadius: 5,
+    width: '100%',
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',
