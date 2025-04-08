@@ -29,7 +29,7 @@ const SearchUserScreen = ({ navigation }) => {
     setShowCategoryDropdown(false);
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.116.233:5000/${category}`);
+      const response = await fetch(`http://192.168.98.250:5000/${category}`);
       const data = await response.json();
       const typesList = data[category] || [];
       setTypes(typesList.filter(item => item !== null && item.trim() !== ''));
@@ -48,7 +48,7 @@ const SearchUserScreen = ({ navigation }) => {
     setShowTypeDropdown(false);
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.116.233:5000/get_categories?type=${type}`);
+      const response = await fetch(`http://192.168.98.250:5000/get_categories?type=${type}`);
       const data = await response.json();
       setCategories(data.categories || []);
       setFilteredCategories(data.categories || []);
