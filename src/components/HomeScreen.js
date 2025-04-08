@@ -1,74 +1,104 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const HomeScreen = ({ navigation }) => {
+  const logo = require('../../assets/logo.jpeg');
+
   return (
-    <View style={styles.container}>
-      <View style={[styles.gridContainer, { marginTop: 60 }]}>
-        <TouchableOpacity
-          style={styles.iconContainer}
-          onPress={() => navigation.navigate('CategorySelection')}
-        >
-          <Icon name="account-plus" size={48} color="#2E3A59" style={styles.iconImage} />
-          <Text style={styles.iconText}>Add User</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.iconContainer}
-          onPress={() => navigation.navigate('ProjectFormScreen')}
-        >
-          <Icon name="folder-plus" size={48} color="#2E3A59" style={styles.iconImage} />
-          <Text style={styles.iconText}>Add Project</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.iconContainer}
-          onPress={() => navigation.navigate('AddExpense')}
-        >
-          <Icon name="cash-plus" size={48} color="#2E3A59" style={styles.iconImage} />
-          <Text style={styles.iconText}>Add Expense</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.iconContainer}
-          onPress={() => navigation.navigate('SearchProject')}
-        >
-          <Icon name="folder-search" size={48} color="#2E3A59" style={styles.iconImage} />
-          <Text style={styles.iconText}>Search Project</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.iconContainer}
-          onPress={() => navigation.navigate('SearchUserScreen')}
-        >
-          <Icon name="account-search" size={48} color="#2E3A59" style={styles.iconImage} />
-          <Text style={styles.iconText}>Search User</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.iconContainer}
-          onPress={() => navigation.navigate('Labor')}
-        >
-          <Icon name="pencil" size={48} color="#2E3A59" style={styles.iconImage} />
-          <Text style={styles.iconText}>Edit User</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      {/* Header with logo */}
+      <View style={styles.header}>
+        <Image source={logo} style={styles.logo} resizeMode="contain" />
       </View>
-    </View>
+      
+      {/* Main content */}
+      <View style={styles.content}>
+        <View style={styles.gridContainer}>
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => navigation.navigate('CategorySelection')}
+          >
+            <Icon name="account-plus" size={48} color="#2E3A59" style={styles.iconImage} />
+            <Text style={styles.iconText}>Add User</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => navigation.navigate('ProjectFormScreen')}
+          >
+            <Icon name="folder-plus" size={48} color="#2E3A59" style={styles.iconImage} />
+            <Text style={styles.iconText}>Add Project</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => navigation.navigate('AddExpense')}
+          >
+            <Icon name="cash-plus" size={48} color="#2E3A59" style={styles.iconImage} />
+            <Text style={styles.iconText}>Add Expense</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => navigation.navigate('SearchProject')}
+          >
+            <Icon name="folder-search" size={48} color="#2E3A59" style={styles.iconImage} />
+            <Text style={styles.iconText}>Search Project</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => navigation.navigate('SearchUserScreen')}
+          >
+            <Icon name="account-search" size={48} color="#2E3A59" style={styles.iconImage} />
+            <Text style={styles.iconText}>Search User</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => navigation.navigate('Labor')}
+          >
+            <Icon name="pencil" size={48} color="#2E3A59" style={styles.iconImage} />
+            <Text style={styles.iconText}>Edit User</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     backgroundColor: '#F5F7FA',
+  },
+  header: {
+    height: 80,
+    width: '100%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+    paddingTop: 10,
+    paddingBottom: 10,
+    marginTop:100,
+    marginBottom: 20
+  },
+  logo: {
+    height: '100%',
+    width: '70%',
+    marginBottom: 10,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-around',
-    padding: 16,
   },
   iconContainer: {
     width: '45%',
