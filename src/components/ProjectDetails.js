@@ -202,7 +202,29 @@ const ProjectDetails = () => {
     setExpenseToDelete(expense);
     setDeleteModalVisible(true);
   };
-
+  const handleUpdateQuotedAmount = async () => {
+    try {
+      const response = await fetch(`${API_URL}/update-project`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname,
+          quotedamount: parseInt(editableQuotedAmount),
+          totexpense: projectDetails.totexpense
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update project');
+      
+      const data = await response.json();
+      setProjectDetails({...projectDetails, quotedamount: parseInt(editableQuotedAmount)});
+      setIsEditingQuotedAmount(false);
+      Alert.alert("Success", "Quoted amount updated successfully!");
+    } catch (error) {
+      console.error('Error updating quoted amount:', error);
+      Alert.alert("Error", "Failed to update quoted amount");
+    }
+  };
   const handleDeleteExpense = async () => {
     if (!expenseToDelete?.uid) return;
 
