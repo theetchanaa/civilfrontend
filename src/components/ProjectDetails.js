@@ -13,7 +13,7 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
-const API_URL = "http://192.168.98.250:5000";
+const API_URL = "http://10.1.224.86:5000";
 
 const ProjectDetails = () => {
   const route = useRoute();
@@ -47,12 +47,12 @@ const ProjectDetails = () => {
   const [predictionLoading, setPredictionLoading] = useState(false);
 
   // Category types mapping
-  const categoryTypes = {
-    labour: ['Mason', 'Carpenter', 'Painter', 'Electrician', 'Plumber', 'Shuttering', 'Tiles Work', 'RR Mason'],
-    material: ['Cement', 'Bricks', 'M Sand', 'Metal', 'Steel', 'Shuttering Materials', 'Wood', 'Hardwares', 
-               'Paint Shop', 'Tiles', 'Tiles Paste', 'Electrical Materials', 'Plumbing Materials', 'Soling', 'RR Stones'],
-    machinery: ['Excavator', 'Tipper', 'Tractor', 'Dozer', 'Roller', 'Water Tanker', 'Transport']
-  };
+  const [categoryTypes, setCategoryTypes] = useState({
+  labour: [],
+  material: [],
+  machinery: []
+});
+
 
   useEffect(() => {
     if (project) {
@@ -61,6 +61,36 @@ const ProjectDetails = () => {
       fetchCategoryData();
     }
   }, [project]);
+
+  useEffect(() => {
+  fetchOptions();
+}, []);
+
+  const fetchOptions = async () => {
+  try {
+    const response = await fetch(`${API_URL}/get-options`);
+    const data = await response.json();
+
+    // Process the data to group labour, material, and machinery
+    const labourList = [];
+    const materialList = [];
+    const machineryList = [];
+
+    data.forEach(item => {
+      if (item.labour && item.labour.trim() !== '') labourList.push(item.labour);
+      if (item.material && item.material.trim() !== '') materialList.push(item.material);
+      if (item.machinery && item.machinery.trim() !== '') machineryList.push(item.machinery);
+    });
+
+    setCategoryTypes({
+      labour: labourList,
+      material: materialList,
+      machinery: machineryList
+    });
+  } catch (error) {
+    console.error("Error fetching options:", error);
+  }
+};
 
   // Filter employee data based on search criteria
   const filteredEmployeeData = employeeData.filter(employee => {
@@ -202,7 +232,29 @@ const ProjectDetails = () => {
     setExpenseToDelete(expense);
     setDeleteModalVisible(true);
   };
-
+  const handleUpdateQuotedAmount = async () => {
+    try {
+      const response = await fetch(`${API_URL}/update-project`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectname: project.projectname,
+          quotedamount: parseInt(editableQuotedAmount),
+          totexpense: projectDetails.totexpense
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update project');
+      
+      const data = await response.json();
+      setProjectDetails({...projectDetails, quotedamount: parseInt(editableQuotedAmount)});
+      setIsEditingQuotedAmount(false);
+      Alert.alert("Success", "Quoted amount updated successfully!");
+    } catch (error) {
+      console.error('Error updating quoted amount:', error);
+      Alert.alert("Error", "Failed to update quoted amount");
+    }
+  };
   const handleDeleteExpense = async () => {
     if (!expenseToDelete?.uid) return;
 
