@@ -6,13 +6,15 @@ import {
   FlatList, 
   TouchableOpacity, 
   ActivityIndicator, 
-  TextInput 
+  TextInput,
+  Alert,
+  Linking 
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import moment from 'moment';
 
-const API_BASE_URL = 'http://10.1.224.86:5000';
+const API_BASE_URL = 'http://10.1.226.6:5000';
 
 const UserFinancialDetails = () => {
   const { params } = useRoute();
@@ -26,6 +28,76 @@ const UserFinancialDetails = () => {
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [dateSearch, setDateSearch] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Download helper function for React Native
+  const downloadReport = async (url, filename) => {
+    try {
+      // First check if the URL is accessible
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      // For React Native, open the URL in browser for download
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+        Alert.alert(
+          "Download Started", 
+          `Opening ${filename} in browser for download.`,
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert(
+          "Download URL", 
+          `Copy this URL to download: ${url}`,
+          [
+            { text: "Copy URL", onPress: () => {
+              // You can add clipboard functionality here if needed
+              Alert.alert("Info", "URL copied to clipboard");
+            }},
+            { text: "OK" }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert("Error", `Failed to download report: ${error.message}`);
+    }
+  };
+
+  // Download functions for User Financial Details
+  const downloadUserFinancialPDF = () => {
+    if (!user?.category_id) {
+      Alert.alert("Error", "User ID not available");
+      return;
+    }
+    
+    let url = `${API_BASE_URL}/download-user-financial-report-pdf?id=${encodeURIComponent(user.category_id)}`;
+    
+    // Add date filters if specific dates are selected
+    if (selectedDate !== 'All') {
+      url += `&start_date=${selectedDate}&end_date=${selectedDate}`;
+    }
+    
+    downloadReport(url, `user_${user.category_id}_financial_report.pdf`);
+  };
+
+  const downloadUserFinancialExcel = () => {
+    if (!user?.category_id) {
+      Alert.alert("Error", "User ID not available");
+      return;
+    }
+    
+    let url = `${API_BASE_URL}/download-user-financial-report-excel?id=${encodeURIComponent(user.category_id)}`;
+    
+    // Add date filters if specific dates are selected
+    if (selectedDate !== 'All') {
+      url += `&start_date=${selectedDate}&end_date=${selectedDate}`;
+    }
+    
+    downloadReport(url, `user_${user.category_id}_financial_report.xlsx`);
+  };
 
   useEffect(() => {
     console.log('Received user data:', user);
@@ -143,6 +215,25 @@ const UserFinancialDetails = () => {
 
         {!loading && filteredProjects.length > 0 ? (
           <View style={styles.resultsContainer}>
+            {/* Export Buttons */}
+            <View style={styles.exportContainer}>
+              <Text style={styles.exportTitle}>Export Financial Data</Text>
+              <View style={styles.exportButtons}>
+                <TouchableOpacity 
+                  style={[styles.exportButton, styles.pdfButton]}
+                  onPress={downloadUserFinancialPDF}
+                >
+                  <Text style={styles.exportButtonText}>Download as PDF</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.exportButton, styles.excelButton]}
+                  onPress={downloadUserFinancialExcel}
+                >
+                  <Text style={styles.exportButtonText}>Download as Excel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
             <View style={styles.resultsHeader}>
               <Text style={styles.columnHeader}>Project</Text>
               <Text style={styles.columnHeader}>Date</Text>
@@ -305,6 +396,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#8F9BB3',
     marginTop: 20,
+  },
+  exportContainer: {
+    padding: 15,
+    backgroundColor: '#F8F9FC',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+  },
+  exportTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 10,
+  },
+  exportButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  exportButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2E3A59',
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  pdfButton: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  excelButton: {
+    backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
+  },
+  exportButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

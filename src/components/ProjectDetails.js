@@ -8,12 +8,13 @@ import {
   ActivityIndicator, 
   TouchableOpacity, 
   Alert, 
-  Modal 
+  Modal,
+  Linking 
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
-const API_URL = "http://10.1.224.86:5000";
+const API_URL = "http://10.1.226.6:5000";
 
 const ProjectDetails = () => {
   const route = useRoute();
@@ -52,6 +53,104 @@ const ProjectDetails = () => {
   material: [],
   machinery: []
 });
+
+  // Download helper function for React Native
+  const downloadReport = async (url, filename) => {
+    try {
+      // First check if the URL is accessible
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      // For React Native, open the URL in browser for download
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+        Alert.alert(
+          "Download Started", 
+          `Opening ${filename} in browser for download.`,
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert(
+          "Download URL", 
+          `Copy this URL to download: ${url}`,
+          [
+            { text: "Copy URL", onPress: () => {
+              // You can add clipboard functionality here if needed
+              Alert.alert("Info", "URL copied to clipboard");
+            }},
+            { text: "OK" }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert("Error", `Failed to download report: ${error.message}`);
+    }
+  };
+
+  // Download functions for Project Details
+  const downloadProjectPDF = () => {
+    if (!project?.projectname) {
+      Alert.alert("Error", "Project name not available");
+      return;
+    }
+    const params = new URLSearchParams({
+      projectname: project.projectname,
+      type: 'employee',
+      name: employeeSearch.name || '',
+      etype: employeeSearch.type || '',
+      date: employeeSearch.date || ''
+    });
+    const url = `${API_URL}/download-project-report-pdf?${params.toString()}`;
+    downloadReport(url, `${project.projectname}_employee_report.pdf`);
+  };
+
+  const downloadProjectExcel = () => {
+    if (!project?.projectname) {
+      Alert.alert("Error", "Project name not available");
+      return;
+    }
+    const params = new URLSearchParams({
+      projectname: project.projectname,
+      type: 'employee',
+      name: employeeSearch.name || '',
+      etype: employeeSearch.type || '',
+      date: employeeSearch.date || ''
+    });
+    const url = `${API_URL}/download-project-report-excel?${params.toString()}`;
+    downloadReport(url, `${project.projectname}_employee_report.xlsx`);
+  };
+
+  const downloadCategoryPDF = () => {
+    if (!project?.projectname) {
+      Alert.alert("Error", "Project name not available");
+      return;
+    }
+    const params = new URLSearchParams({
+      projectname: project.projectname,
+      type: 'category',
+      search: paymentTypeSearch || ''
+    });
+    const url = `${API_URL}/download-project-report-pdf?${params.toString()}`;
+    downloadReport(url, `${project.projectname}_category_report.pdf`);
+  };
+
+  const downloadCategoryExcel = () => {
+    if (!project?.projectname) {
+      Alert.alert("Error", "Project name not available");
+      return;
+    }
+    const params = new URLSearchParams({
+      projectname: project.projectname,
+      type: 'category',
+      search: paymentTypeSearch || ''
+    });
+    const url = `${API_URL}/download-project-report-excel?${params.toString()}`;
+    downloadReport(url, `${project.projectname}_category_report.xlsx`);
+  };
 
 
   useEffect(() => {
@@ -506,6 +605,25 @@ const ProjectDetails = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Employee Expenses</Text>
           
+          {/* Export Buttons for Employee Expenses */}
+          <View style={styles.exportContainer}>
+            <Text style={styles.exportTitle}>Export Employee Data</Text>
+            <View style={styles.exportButtons}>
+              <TouchableOpacity 
+                style={[styles.exportButton, styles.pdfButton]}
+                onPress={downloadProjectPDF}
+              >
+                <Text style={styles.exportButtonText}>Download as PDF</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.exportButton, styles.excelButton]}
+                onPress={downloadProjectExcel}
+              >
+                <Text style={styles.exportButtonText}>Download as Excel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
           {/* Employee Expenses Search */}
           <View style={styles.searchContainer}>
             <TextInput
@@ -562,6 +680,25 @@ const ProjectDetails = () => {
         {/* Payment Types Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Types</Text>
+          
+          {/* Export Buttons for Payment Types */}
+          <View style={styles.exportContainer}>
+            <Text style={styles.exportTitle}>Export Category Data</Text>
+            <View style={styles.exportButtons}>
+              <TouchableOpacity 
+                style={[styles.exportButton, styles.pdfButton]}
+                onPress={downloadCategoryPDF}
+              >
+                <Text style={styles.exportButtonText}>Download as PDF</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.exportButton, styles.excelButton]}
+                onPress={downloadCategoryExcel}
+              >
+                <Text style={styles.exportButtonText}>Download as Excel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
           
           {/* Payment Types Search */}
           <View style={styles.searchContainer}>
@@ -1078,7 +1215,42 @@ const styles = StyleSheet.create({
   resultValue: {
     fontSize: 16,
     color: '#2E3A59',
-  }
+  },
+  exportContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    elevation: 3,
+  },
+  exportTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2E3A59',
+    marginBottom: 10,
+  },
+  exportButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  exportButton: {
+    backgroundColor: '#0078D4',
+    borderRadius: 8,
+    padding: 10,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  pdfButton: {
+    backgroundColor: '#4CAF50',
+  },
+  excelButton: {
+    backgroundColor: '#FF9800',
+  },
+  exportButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
 
 export default ProjectDetails;

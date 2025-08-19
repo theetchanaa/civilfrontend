@@ -7,10 +7,10 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
-const API_URL = 'http://10.1.224.86:5000/projects'; 
-const FETCH_ID_URL = 'http://10.1.224.86:5000/get_project_payment_details';
-const ADD_EXPENSE_URL = 'http://10.1.224.86:5000/add_expense';
-const CHECK_OVERRUN_URL = 'http://10.1.224.86:5000/check-overrun';
+const API_URL = 'http://10.1.226.6:5000/projects'; 
+const FETCH_ID_URL = 'http://10.1.226.6:5000/get_project_payment_details';
+const ADD_EXPENSE_URL = 'http://10.1.226.6:5000/add_expense';
+const CHECK_OVERRUN_URL = 'http://10.1.226.6:5000/check-overrun';
 
 const AddExpenseScreen = () => {
   // Existing state variables
@@ -77,7 +77,7 @@ const AddExpenseScreen = () => {
   const fetchPickerOptions = async (category) => {
     try {
       console.log(`Fetching options for category: ${category}`);
-      const response = await axios.get(`http://10.1.224.86:5000/${category}`);
+      const response = await axios.get(`http://10.1.226.6:5000/${category}`);
       
       console.log('API Response:', response.data);
 
@@ -209,8 +209,11 @@ const AddExpenseScreen = () => {
   // Function to handle acknowledging the overrun warning
   const handleOverrunConfirm = () => {
     setShowOverrunWarning(false);
-    Alert.alert('Expense Added', 'Expense has been added successfully, but please note the potential budget overrun.');
-    resetForm();
+    Alert.alert(
+      'Expense Added', 
+      'Expense has been added successfully, but please note the potential budget overrun. An email notification has been sent to stakeholders.',
+      [{ text: 'OK', onPress: () => resetForm() }]
+    );
   };
 
   return (

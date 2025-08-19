@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const API_URL = 'http://10.1.224.86:5000/projects';
+const API_URL = 'http://10.1.226.6:5000/projects';
 
 const Project = () => {
   const navigation = useNavigation();

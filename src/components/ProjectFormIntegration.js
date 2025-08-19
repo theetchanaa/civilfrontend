@@ -14,7 +14,7 @@ const useProjectForm = () => {
 
   useEffect(() => {
     if (category) {
-      axios.get(`http://10.1.224.86:5000/${category}`)
+      axios.get(`http://10.1.226.6:5000/${category}`)
         .then(response => {
           const types = response.data[category] || [];
           const validTypes = types.filter(item => item && item.trim() !== '');
@@ -48,7 +48,7 @@ const useProjectForm = () => {
         })),
       };
   
-      axios.post('http://10.1.224.86:5000/submit_project', data)
+      axios.post('http://10.1.226.6:5000/submit_project', data)
         .then(response => {
           alert('Project and payments added successfully!');
           setProjectName('');

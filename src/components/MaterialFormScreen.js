@@ -25,7 +25,7 @@ const MaterialFormScreen = () => {
   useEffect(() => {
     const fetchIndustryOptions = async () => {
       try {
-        const response = await fetch('http://10.1.224.86:5000/material');
+        const response = await fetch('http://10.1.226.6:5000/material');
         const data = await response.json();
         console.log(data);
         setIndustryOptions(data.material);
@@ -56,7 +56,7 @@ const MaterialFormScreen = () => {
 
     try {
       if (newIndustryType && !industryType) {
-        const labourResponse = await fetch('http://10.1.224.86:5000/add-material', {
+        const labourResponse = await fetch('http://10.1.226.6:5000/add-material', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ const MaterialFormScreen = () => {
         }
       }
 
-      const response = await fetch('http://10.1.224.86:5000/add-category', {
+      const response = await fetch('http://10.1.226.6:5000/add-category', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
